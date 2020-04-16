@@ -1,14 +1,15 @@
 package com.ctrip.framework.apollo.common.entity;
 
-import com.ctrip.framework.apollo.common.utils.InputValidator;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Pattern;
-import org.hibernate.annotations.SQLDelete;
-import org.hibernate.annotations.Where;
-
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Table;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.Pattern;
+
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.Where;
+
+import com.ctrip.framework.apollo.common.utils.InputValidator;
 
 @Entity
 @Table(name = "App")
@@ -16,10 +17,16 @@ import javax.persistence.Table;
 @Where(clause = "isDeleted = 0")
 public class App extends BaseEntity {
 
+    /**
+     * app名称
+     */
   @NotBlank(message = "Name cannot be blank")
   @Column(name = "Name", nullable = false)
   private String name;
 
+    /**
+     * app编号
+     */
   @NotBlank(message = "AppId cannot be blank")
   @Pattern(
       regexp = InputValidator.CLUSTER_NAMESPACE_VALIDATOR,
@@ -28,6 +35,9 @@ public class App extends BaseEntity {
   @Column(name = "AppId", nullable = false)
   private String appId;
 
+    /**
+     * 部门编号
+     */
   @Column(name = "OrgId", nullable = false)
   private String orgId;
 

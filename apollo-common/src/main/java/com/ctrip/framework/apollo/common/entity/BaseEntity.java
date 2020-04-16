@@ -1,8 +1,5 @@
 package com.ctrip.framework.apollo.common.entity;
 
-import com.google.common.base.MoreObjects;
-import com.google.common.base.MoreObjects.ToStringHelper;
-
 import java.util.Date;
 
 import javax.persistence.Column;
@@ -16,107 +13,130 @@ import javax.persistence.PrePersist;
 import javax.persistence.PreRemove;
 import javax.persistence.PreUpdate;
 
+import com.google.common.base.MoreObjects;
+import com.google.common.base.MoreObjects.ToStringHelper;
+
 @MappedSuperclass
 @Inheritance(strategy = InheritanceType.TABLE_PER_CLASS)
 public abstract class BaseEntity {
 
-  @Id
-  @GeneratedValue(strategy = GenerationType.IDENTITY)
-  @Column(name = "Id")
-  private long id;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "Id")
+    private long id;
 
-  @Column(name = "IsDeleted", columnDefinition = "Bit default '0'")
-  protected boolean isDeleted = false;
+    @Column(name = "IsDeleted", columnDefinition = "Bit default '0'")
+    protected boolean isDeleted = false;
 
-  @Column(name = "DataChange_CreatedBy", nullable = false)
-  private String dataChangeCreatedBy;
+    @Column(name = "DataChange_CreatedBy", nullable = false)
+    private String dataChangeCreatedBy;
 
-  @Column(name = "DataChange_CreatedTime", nullable = false)
-  private Date dataChangeCreatedTime;
+    @Column(name = "DataChange_CreatedTime", nullable = false)
+    private Date dataChangeCreatedTime;
 
-  @Column(name = "DataChange_LastModifiedBy")
-  private String dataChangeLastModifiedBy;
+    @Column(name = "DataChange_LastModifiedBy")
+    private String dataChangeLastModifiedBy;
 
-  @Column(name = "DataChange_LastTime")
-  private Date dataChangeLastModifiedTime;
+    @Column(name = "DataChange_LastTime")
+    private Date dataChangeLastModifiedTime;
 
-  public String getDataChangeCreatedBy() {
-    return dataChangeCreatedBy;
-  }
-
-  public Date getDataChangeCreatedTime() {
-    return dataChangeCreatedTime;
-  }
-
-  public String getDataChangeLastModifiedBy() {
-    return dataChangeLastModifiedBy;
-  }
-
-  public Date getDataChangeLastModifiedTime() {
-    return dataChangeLastModifiedTime;
-  }
-
-  public long getId() {
-    return id;
-  }
-
-  public boolean isDeleted() {
-    return isDeleted;
-  }
-
-  public void setDataChangeCreatedBy(String dataChangeCreatedBy) {
-    this.dataChangeCreatedBy = dataChangeCreatedBy;
-  }
-
-  public void setDataChangeCreatedTime(Date dataChangeCreatedTime) {
-    this.dataChangeCreatedTime = dataChangeCreatedTime;
-  }
-
-  public void setDataChangeLastModifiedBy(String dataChangeLastModifiedBy) {
-    this.dataChangeLastModifiedBy = dataChangeLastModifiedBy;
-  }
-
-  public void setDataChangeLastModifiedTime(Date dataChangeLastModifiedTime) {
-    this.dataChangeLastModifiedTime = dataChangeLastModifiedTime;
-  }
-
-  public void setDeleted(boolean deleted) {
-    isDeleted = deleted;
-  }
-
-  public void setId(long id) {
-    this.id = id;
-  }
-
-  @PrePersist
-  protected void prePersist() {
-    if (this.dataChangeCreatedTime == null) {
-        dataChangeCreatedTime = new Date();
+    public String getDataChangeCreatedBy() {
+        return dataChangeCreatedBy;
     }
-    if (this.dataChangeLastModifiedTime == null) {
-        dataChangeLastModifiedTime = new Date();
+
+    public Date getDataChangeCreatedTime() {
+        return dataChangeCreatedTime;
     }
-  }
 
-  @PreUpdate
-  protected void preUpdate() {
-    this.dataChangeLastModifiedTime = new Date();
-  }
+    public String getDataChangeLastModifiedBy() {
+        return dataChangeLastModifiedBy;
+    }
 
-  @PreRemove
-  protected void preRemove() {
-    this.dataChangeLastModifiedTime = new Date();
-  }
+    public Date getDataChangeLastModifiedTime() {
+        return dataChangeLastModifiedTime;
+    }
 
-  protected ToStringHelper toStringHelper() {
-    return MoreObjects.toStringHelper(this).omitNullValues().add("id", id)
-        .add("dataChangeCreatedBy", dataChangeCreatedBy)
-        .add("dataChangeCreatedTime", dataChangeCreatedTime)
-        .add("dataChangeLastModifiedBy", dataChangeLastModifiedBy)
-        .add("dataChangeLastModifiedTime", dataChangeLastModifiedTime);
-  }
+    public long getId() {
+        return id;
+    }
 
-  public String toString(){
-    return toStringHelper().toString();
-  }
+    public boolean isDeleted() {
+        return isDeleted;
+    }
+
+    public void setDataChangeCreatedBy(String dataChangeCreatedBy) {
+        this.dataChangeCreatedBy = dataChangeCreatedBy;
+    }
+
+    public void setDataChangeCreatedTime(Date dataChangeCreatedTime) {
+        this.dataChangeCreatedTime = dataChangeCreatedTime;
+    }
+
+    public void setDataChangeLastModifiedBy(String dataChangeLastModifiedBy) {
+        this.dataChangeLastModifiedBy = dataChangeLastModifiedBy;
+    }
+
+    public void setDataChangeLastModifiedTime(Date dataChangeLastModifiedTime) {
+        this.dataChangeLastModifiedTime = dataChangeLastModifiedTime;
+    }
+
+    public void setDeleted(boolean deleted) {
+        isDeleted = deleted;
+    }
+
+    public void setId(long id) {
+        this.id = id;
+    }
+
+    /**
+     * 保存前置方法
+     * 
+     * void
+     * 
+     * @date: 2020年4月14日 下午2:19:34
+     */
+    @PrePersist
+    protected void prePersist() {
+        if (this.dataChangeCreatedTime == null) {
+            dataChangeCreatedTime = new Date();
+        }
+        if (this.dataChangeLastModifiedTime == null) {
+            dataChangeLastModifiedTime = new Date();
+        }
+    }
+
+    /**
+     * 更新前置方法
+     * 
+     * void
+     * 
+     * @date: 2020年4月14日 下午2:19:46
+     */
+    @PreUpdate
+    protected void preUpdate() {
+        this.dataChangeLastModifiedTime = new Date();
+    }
+
+    /**
+     * 删除前置方法
+     * 
+     * void
+     * 
+     * @date: 2020年4月14日 下午2:19:57
+     */
+    @PreRemove
+    protected void preRemove() {
+        this.dataChangeLastModifiedTime = new Date();
+    }
+
+    protected ToStringHelper toStringHelper() {
+        return MoreObjects.toStringHelper(this).omitNullValues().add("id", id)
+                .add("dataChangeCreatedBy", dataChangeCreatedBy).add("dataChangeCreatedTime", dataChangeCreatedTime)
+                .add("dataChangeLastModifiedBy", dataChangeLastModifiedBy)
+                .add("dataChangeLastModifiedTime", dataChangeLastModifiedTime);
+    }
+
+    public String toString() {
+        return toStringHelper().toString();
+    }
 }
