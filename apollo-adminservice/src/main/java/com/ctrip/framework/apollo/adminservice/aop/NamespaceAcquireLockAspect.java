@@ -69,12 +69,13 @@ public class NamespaceAcquireLockAspect {
     }
 
     void acquireLock(String appId, String clusterName, String namespaceName, String currentUser) {
+        // 当关闭锁定 Namespace 开关时，直接返回
         if (bizConfig.isNamespaceLockSwitchOff()) {
             return;
         }
-
+        // 获得 Namespace 对象
         Namespace namespace = namespaceService.findOne(appId, clusterName, namespaceName);
-
+        // 尝试锁定
         acquireLock(namespace, currentUser);
     }
 
@@ -89,6 +90,14 @@ public class NamespaceAcquireLockAspect {
 
     }
 
+    /**
+     * 尝试锁定
+     * 
+     * @param namespace
+     * @param currentUser
+     *            void
+     * @date: 2020年4月16日 下午5:10:30
+     */
     private void acquireLock(Namespace namespace, String currentUser) {
         if (namespace == null) {
             throw new BadRequestException("namespace not exist.");
@@ -103,7 +112,9 @@ public class NamespaceAcquireLockAspect {
                 // lock success
             } catch (DataIntegrityViolationException e) {
                 // lock fail
+                // 唯一索引重复, 重新获取锁对象
                 namespaceLock = namespaceLockService.findLock(namespaceId);
+                // 校验获得锁的是不是自己
                 checkLock(namespace, namespaceLock, currentUser);
             } catch (Exception e) {
                 logger.error("try lock error", e);
@@ -111,10 +122,18 @@ public class NamespaceAcquireLockAspect {
             }
         } else {
             // check lock owner is current user
+            // 校验获得锁的是不是自己
             checkLock(namespace, namespaceLock, currentUser);
         }
     }
 
+    /**
+     * 尝试锁定(也就是加一天记录, 有唯一主键, 多个人添加的话只有一个成功, 其他会有报错)
+     * 
+     * @param namespaceId
+     * @param user
+     * @date: 2020年4月16日 下午5:11:17
+     */
     private void tryLock(long namespaceId, String user) {
         NamespaceLock lock = new NamespaceLock();
         lock.setNamespaceId(namespaceId);
