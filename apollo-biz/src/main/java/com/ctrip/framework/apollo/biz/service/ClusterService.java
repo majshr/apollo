@@ -77,10 +77,12 @@ public class ClusterService {
         if (!isClusterNameUnique(entity.getAppId(), entity.getName())) {
             throw new BadRequestException("cluster not unique");
         }
+        
         // 保存 Cluster 对象到数据库
         entity.setId(0);// protection
         Cluster cluster = clusterRepository.save(entity);
 
+        // 保存审计信息, 日志信息
         auditService.audit(Cluster.class.getSimpleName(), cluster.getId(), Audit.OP.INSERT,
                 cluster.getDataChangeCreatedBy());
 

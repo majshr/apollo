@@ -39,7 +39,7 @@ public class AdminService {
 
         // 创建app默认名称空间, 默认application
         appNamespaceService.createDefaultAppNamespace(appId, createBy);
-        // 创建app默认cluster, 默认default
+        // 创建app默认cluster(集群), 默认default
         clusterService.createDefaultCluster(appId, createBy);
         // 创建cluster默认名称空间
         namespaceService.instanceOfAppNamespaces(appId, ConfigConsts.CLUSTER_NAME_DEFAULT, createBy);

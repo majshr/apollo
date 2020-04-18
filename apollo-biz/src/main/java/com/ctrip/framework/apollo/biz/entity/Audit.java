@@ -9,6 +9,11 @@ import org.hibernate.annotations.Where;
 
 import com.ctrip.framework.apollo.common.entity.BaseEntity;
 
+/**
+ * 审计信息
+ * @author maj
+ *
+ */
 @Entity
 @Table(name = "Audit")
 @SQLDelete(sql = "Update Audit set isDeleted = 1 where id = ?")

@@ -17,7 +17,9 @@ import com.ctrip.framework.apollo.core.enums.ConfigFileFormat;
 @SQLDelete(sql = "Update AppNamespace set isDeleted = 1 where id = ?")
 @Where(clause = "isDeleted = 0")
 public class AppNamespace extends BaseEntity {
-
+    /**
+     * AppNamespace 名
+     */
     @NotBlank(message = "AppNamespace Name cannot be blank")
     @Pattern(regexp = InputValidator.CLUSTER_NAMESPACE_VALIDATOR, message = "Invalid Namespace format: "
             + InputValidator.INVALID_CLUSTER_NAMESPACE_MESSAGE + " & "
@@ -25,6 +27,9 @@ public class AppNamespace extends BaseEntity {
     @Column(name = "Name", nullable = false)
     private String name;
 
+    /**
+     * App 编号, 对应app; app:appNamespace=1:N
+     */
     @NotBlank(message = "AppId cannot be blank")
     @Column(name = "AppId", nullable = false)
     private String appId;
@@ -37,9 +42,18 @@ public class AppNamespace extends BaseEntity {
     @Column(name = "Format", nullable = false)
     private String format;
 
+    /**
+     * 是否公用的, 默认为false<br>
+     * private: 私有的, 只能被所属应用获取到, 一个应用尝试获取其他应用的private的namespace, 会报404异常<br>
+     * public: 共有的, 能被任何应用获取<br>
+     * 这里的获取权限是相对于apollo客户端来说的
+     */
     @Column(name = "IsPublic", columnDefinition = "Bit default '0'")
     private boolean isPublic = false;
 
+    /**
+     * 备注
+     */
     @Column(name = "Comment")
     private String comment;
 

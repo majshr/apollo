@@ -58,17 +58,25 @@ public class BeanUtils {
         return instance;
     }
 
+    /**
+     * 获取对象的值为空的属性的名称
+     * @param source
+     * @return
+     */
     private static String[] getNullPropertyNames(Object source) {
         final BeanWrapper src = new BeanWrapperImpl(source);
         PropertyDescriptor[] pds = src.getPropertyDescriptors();
 
         Set<String> emptyNames = new HashSet<>();
         for (PropertyDescriptor pd : pds) {
+        	// 属性值为空, 把属性名称添加到集合
             Object srcValue = src.getPropertyValue(pd.getName());
             if (srcValue == null) {
                 emptyNames.add(pd.getName());
             }
         }
+        
+        // 值为空属性的名称集合转为数组
         String[] result = new String[emptyNames.size()];
         return emptyNames.toArray(result);
     }

@@ -44,7 +44,7 @@ public class AppNamespaceController {
         // BadRequestException 异常
         AppNamespace managedEntity = appNamespaceService.findOne(entity.getAppId(), entity.getName());
         if (managedEntity == null) {
-            // 设置 AppNamespace 的 format 属性为 "properties"，若为 null 。
+            // 若为配置类型为 null, 设置 AppNamespace 的 format 属性为 "properties" 。
             if (StringUtils.isEmpty(entity.getFormat())) {
                 entity.setFormat(ConfigFileFormat.Properties.getValue());
             }

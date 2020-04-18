@@ -106,18 +106,22 @@ public class AppService {
     @Transactional
     public App createAppInLocal(App app) {
         String appId = app.getAppId();
+        
+        // 判断 `appId` 是否已经存在对应的 App 对象。若已经存在，抛出 BadRequestException 异常。
         App managedApp = appRepository.findByAppId(appId);
 
         if (managedApp != null) {
             throw new BadRequestException(String.format("App already exists. AppId = %s", appId));
         }
 
+        // 获得 UserInfo 对象。若不存在，抛出 BadRequestException 异常
         UserInfo owner = userService.findByUserId(app.getOwnerName());
         if (owner == null) {
             throw new BadRequestException("Application's owner not exist.");
         }
         app.setOwnerEmail(owner.getEmail());
 
+        // 设置 App 的创建和修改人
         String operator = userInfoHolder.getUser().getUserId();
         app.setDataChangeCreatedBy(operator);
         app.setDataChangeLastModifiedBy(operator);
@@ -125,10 +129,12 @@ public class AppService {
         // 保存app对象到数据库
         App createdApp = appRepository.save(app);
 
-        // 创建app默认名称空间: application
+        // 创建app默认名称空间: "application"
         appNamespaceService.createDefaultAppNamespace(appId);
+        // 初始化 App 角色
         roleInitializationService.initAppRoles(createdApp);
 
+        // 【TODO 6001】Tracer 日志
         Tracer.logEvent(TracerEventType.CREATE_APP, appId);
 
         return createdApp;

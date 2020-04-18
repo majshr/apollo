@@ -103,10 +103,12 @@ public class AppNamespaceService {
 
     @Transactional
     public AppNamespace createAppNamespace(AppNamespace appNamespace) {
+    	// 判断 `name` 在 App 下是否已经存在对应的 AppNamespace 对象。
         String createBy = appNamespace.getDataChangeCreatedBy();
         if (!isAppNamespaceNameUnique(appNamespace.getAppId(), appNamespace.getName())) {
             throw new ServiceException("appnamespace not unique");
         }
+        
         appNamespace.setId(0);// protection
         appNamespace.setDataChangeCreatedBy(createBy);
         appNamespace.setDataChangeLastModifiedBy(createBy);

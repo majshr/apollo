@@ -21,6 +21,9 @@ public class Cluster extends BaseEntity implements Comparable<Cluster> {
     @Column(name = "Name", nullable = false)
     private String name;
 
+    /**
+     * app 编号
+     */
     @Column(name = "AppId", nullable = false)
     private String appId;
 
