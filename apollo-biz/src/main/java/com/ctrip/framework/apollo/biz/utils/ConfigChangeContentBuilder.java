@@ -35,13 +35,24 @@ public class ConfigChangeContentBuilder {
      */
     private List<Item> deleteItems = new LinkedList<>();
 
+    /**
+     * 创建Item(添加Item到创建集合)
+     * @param item
+     * @return
+     */
     public ConfigChangeContentBuilder createItem(Item item) {
         if (!StringUtils.isEmpty(item.getKey())) {
             createItems.add(cloneItem(item));
         }
         return this;
     }
-
+    
+    /**
+     * 更新Item(添加到更新集合)
+     * @param oldItem
+     * @param newItem
+     * @return
+     */
     public ConfigChangeContentBuilder updateItem(Item oldItem, Item newItem) {
         if (!oldItem.getValue().equals(newItem.getValue())) {
             ItemPair itemPair = new ItemPair(cloneItem(oldItem), cloneItem(newItem));
@@ -50,6 +61,11 @@ public class ConfigChangeContentBuilder {
         return this;
     }
 
+    /***
+     * 删除Item(添加到删除集合)
+     * @param item
+     * @return
+     */
     public ConfigChangeContentBuilder deleteItem(Item item) {
         if (!StringUtils.isEmpty(item.getKey())) {
             deleteItems.add(cloneItem(item));
@@ -64,7 +80,9 @@ public class ConfigChangeContentBuilder {
      * @date: 2020年4月15日 上午11:16:08
      */
     public boolean hasContent() {
-        return !createItems.isEmpty() || !updateItems.isEmpty() || !deleteItems.isEmpty();
+        return !createItems.isEmpty() || // 有新加的属性 
+        		!updateItems.isEmpty() || // 有更新的属性
+        		!deleteItems.isEmpty(); // 有删除的属性
     }
 
     /**

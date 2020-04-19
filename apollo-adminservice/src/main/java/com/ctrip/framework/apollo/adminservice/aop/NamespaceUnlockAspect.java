@@ -82,6 +82,7 @@ public class NamespaceUnlockAspect {
     }
 
     private void tryUnlock(Namespace namespace) {
+    	// 当关闭锁定 Namespace 开关时，直接返回
         if (bizConfig.isNamespaceLockSwitchOff()) {
             return;
         }
@@ -94,6 +95,11 @@ public class NamespaceUnlockAspect {
     }
 
 
+    /**
+     * 若当前 Namespace 的配置恢复原有状态
+     * @param namespace
+     * @return
+     */
     boolean isModified(Namespace namespace) {
         // 获得当前 Namespace 的最后有效的 Release 对象
         Release release = releaseService.findLatestActiveRelease(namespace);
@@ -117,7 +123,7 @@ public class NamespaceUnlockAspect {
     }
 
     /**
-     * 判断是否有普通的 Item 配置项。若有，则代表修改过。
+     * 判断是否有普通的 Item 配置项。若有，则代表修改过, 返回true。
      * 
      * @param namespace
      * @return boolean

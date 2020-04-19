@@ -82,14 +82,11 @@ public class BeanUtils {
     }
 
     /**
-     * 用于将一个列表转换为列表中的对象的某个属性映射到列表中的对象
+     * 用于将一个列表转换为列表中的对象的某个属性映射到列表中的对象<br>
+     * map的key为参数名称为key属性的值, map的value为对象
      *
-     * <pre>
-     * List<UserDTO> userList = userService.queryUsers();
-     * Map<Integer, userDTO> userIdToUser = BeanUtil.mapByKey("userId", userList);
-     * </pre>
-     *
-     * @param key
+     * @param key 参数名称
+     * @param list 对象集合
      *            属性名
      */
     @SuppressWarnings("unchecked")
@@ -106,6 +103,7 @@ public class BeanUtils {
             }
             field.setAccessible(true);
             for (Object o : list) {
+            	// 设置map, key为属性值, value为对象
                 map.put((K) field.get(o), (V) o);
             }
         } catch (Exception e) {
@@ -176,10 +174,17 @@ public class BeanUtils {
         return set;
     }
 
+    /**
+     * 查找Class中名称为key的属性, 返回Field属性对象
+     * @param clazz
+     * @param key
+     * @return
+     */
     private static Field deepFindField(Class<?> clazz, String key) {
         Field field = null;
         while (!clazz.getName().equals(Object.class.getName())) {
             try {
+            	// 类中没有名称为key的属性, 会抛出异常, 再从父类中查找
                 field = clazz.getDeclaredField(key);
                 if (field != null) {
                     break;

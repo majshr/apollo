@@ -53,6 +53,14 @@ public class ItemController {
         this.namespaceService = namespaceService;
     }
 
+    /**
+     * 根据文本模式批量添加配置
+     * @param appId
+     * @param env
+     * @param clusterName
+     * @param namespaceName
+     * @param model
+     */
     @PreAuthorize(value = "@permissionValidator.hasModifyNamespacePermission(#appId, #namespaceName, #env)")
     @PutMapping(value = "/apps/{appId}/envs/{env}/clusters/{clusterName}/namespaces/{namespaceName}/items", consumes = {
             "application/json" })
@@ -76,6 +84,7 @@ public class ItemController {
         // protect
         item.setLineNum(0);
         item.setId(0);
+        // 设置 ItemDTO 的创建和修改人为当前管理员
         String userId = userInfoHolder.getUser().getUserId();
         item.setDataChangeCreatedBy(userId);
         item.setDataChangeLastModifiedBy(userId);

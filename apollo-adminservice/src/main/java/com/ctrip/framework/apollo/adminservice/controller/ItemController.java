@@ -48,17 +48,21 @@ public class ItemController {
             @PathVariable("namespaceName") String namespaceName, @RequestBody ItemDTO dto) {
         Item entity = BeanUtils.transform(Item.class, dto);
 
+        // 创建 ConfigChangeContentBuilder 对象
         ConfigChangeContentBuilder builder = new ConfigChangeContentBuilder();
+        // 校验对应的 Item 是否已经存在。
         Item managedEntity = itemService.findOne(appId, clusterName, namespaceName, entity.getKey());
         if (managedEntity != null) {
             throw new BadRequestException("item already exists");
         }
         // 保存 Item 对象
         entity = itemService.save(entity);
+        
         // 添加到 ConfigChangeContentBuilder 中
         builder.createItem(entity);
         // 将 Item 转换成 ItemDTO 对象
         dto = BeanUtils.transform(ItemDTO.class, entity);
+        
         // 创建 Commit 对象
         Commit commit = new Commit();
         commit.setAppId(appId);

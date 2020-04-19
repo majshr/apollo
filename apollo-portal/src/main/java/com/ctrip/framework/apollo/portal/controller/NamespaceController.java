@@ -135,6 +135,7 @@ public class NamespaceController {
         // 循环 `models` ，创建 Namespace 对象
         for (NamespaceCreationModel model : models) {
             NamespaceDTO namespace = model.getNamespace();
+            // 校验相关参数非空
             RequestPrecondition.checkArgumentsNotEmpty(model.getEnv(), namespace.getAppId(), namespace.getClusterName(),
                     namespace.getNamespaceName());
 

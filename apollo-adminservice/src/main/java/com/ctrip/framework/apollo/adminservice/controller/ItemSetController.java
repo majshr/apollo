@@ -10,24 +10,29 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
+/**
+ * 批量更新Item的Controller
+ * 
+ * @author maj
+ *
+ */
 @RestController
 public class ItemSetController {
 
-  private final ItemSetService itemSetService;
+	private final ItemSetService itemSetService;
 
-  public ItemSetController(final ItemSetService itemSetService) {
-    this.itemSetService = itemSetService;
-  }
+	public ItemSetController(final ItemSetService itemSetService) {
+		this.itemSetService = itemSetService;
+	}
 
-  @PreAcquireNamespaceLock
-  @PostMapping("/apps/{appId}/clusters/{clusterName}/namespaces/{namespaceName}/itemset")
-  public ResponseEntity<Void> create(@PathVariable String appId, @PathVariable String clusterName,
-                                     @PathVariable String namespaceName, @RequestBody ItemChangeSets changeSet) {
+	@PreAcquireNamespaceLock
+	@PostMapping("/apps/{appId}/clusters/{clusterName}/namespaces/{namespaceName}/itemset")
+	public ResponseEntity<Void> create(@PathVariable String appId, @PathVariable String clusterName,
+			@PathVariable String namespaceName, @RequestBody ItemChangeSets changeSet) {
+		// 批量更新 Namespace 下的 Item 们
+		itemSetService.updateSet(appId, clusterName, namespaceName, changeSet);
 
-    itemSetService.updateSet(appId, clusterName, namespaceName, changeSet);
-
-    return ResponseEntity.status(HttpStatus.OK).build();
-  }
-
+		return ResponseEntity.status(HttpStatus.OK).build();
+	}
 
 }

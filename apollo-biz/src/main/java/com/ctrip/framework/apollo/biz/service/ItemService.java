@@ -122,7 +122,9 @@ public class ItemService {
 
     @Transactional
     public Item save(Item entity) {
+    	// 校验 Key 长度
         checkItemKeyLength(entity.getKey());
+        // 校验 Value 长度
         checkItemValueLength(entity.getNamespaceId(), entity.getValue());
 
         entity.setId(0);// protection

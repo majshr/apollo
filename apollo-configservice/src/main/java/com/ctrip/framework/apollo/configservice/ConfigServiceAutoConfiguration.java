@@ -23,81 +23,82 @@ import org.springframework.security.crypto.password.NoOpPasswordEncoder;
 @Configuration
 public class ConfigServiceAutoConfiguration {
 
-  private final BizConfig bizConfig;
+	private final BizConfig bizConfig;
 
-  public ConfigServiceAutoConfiguration(final BizConfig bizConfig) {
-    this.bizConfig = bizConfig;
-  }
+	public ConfigServiceAutoConfiguration(final BizConfig bizConfig) {
+		this.bizConfig = bizConfig;
+	}
 
-  @Bean
-  public GrayReleaseRulesHolder grayReleaseRulesHolder() {
-    return new GrayReleaseRulesHolder();
-  }
+	@Bean
+	public GrayReleaseRulesHolder grayReleaseRulesHolder() {
+		return new GrayReleaseRulesHolder();
+	}
 
-  @Bean
-  public ConfigService configService() {
-    if (bizConfig.isConfigServiceCacheEnabled()) {
-      return new ConfigServiceWithCache();
-    }
-    return new DefaultConfigService();
-  }
+	@Bean
+	public ConfigService configService() {
+		// 开启缓存
+		if (bizConfig.isConfigServiceCacheEnabled()) {
+			return new ConfigServiceWithCache();
+		}
+		// 不开启缓存
+		return new DefaultConfigService();
+	}
 
-  @Bean
-  public static NoOpPasswordEncoder passwordEncoder() {
-    return (NoOpPasswordEncoder) NoOpPasswordEncoder.getInstance();
-  }
+	@Bean
+	public static NoOpPasswordEncoder passwordEncoder() {
+		return (NoOpPasswordEncoder) NoOpPasswordEncoder.getInstance();
+	}
 
-  @Bean
-  public FilterRegistrationBean clientAuthenticationFilter(AccessKeyUtil accessKeyUtil) {
-    FilterRegistrationBean filterRegistrationBean = new FilterRegistrationBean();
+	@Bean
+	public FilterRegistrationBean clientAuthenticationFilter(AccessKeyUtil accessKeyUtil) {
+		FilterRegistrationBean filterRegistrationBean = new FilterRegistrationBean();
 
-    filterRegistrationBean.setFilter(new ClientAuthenticationFilter(accessKeyUtil));
-    filterRegistrationBean.addUrlPatterns("/configs/*");
-    filterRegistrationBean.addUrlPatterns("/configfiles/*");
-    filterRegistrationBean.addUrlPatterns("/notifications/v2/*");
+		filterRegistrationBean.setFilter(new ClientAuthenticationFilter(accessKeyUtil));
+		filterRegistrationBean.addUrlPatterns("/configs/*");
+		filterRegistrationBean.addUrlPatterns("/configfiles/*");
+		filterRegistrationBean.addUrlPatterns("/notifications/v2/*");
 
-    return filterRegistrationBean;
-  }
+		return filterRegistrationBean;
+	}
 
-  @Configuration
-  static class MessageScannerConfiguration {
-    private final NotificationController notificationController;
-    private final ConfigFileController configFileController;
-    private final NotificationControllerV2 notificationControllerV2;
-    private final GrayReleaseRulesHolder grayReleaseRulesHolder;
-    private final ReleaseMessageServiceWithCache releaseMessageServiceWithCache;
-    private final ConfigService configService;
+	@Configuration
+	static class MessageScannerConfiguration {
+		private final NotificationController notificationController;
+		private final ConfigFileController configFileController;
+		private final NotificationControllerV2 notificationControllerV2;
+		private final GrayReleaseRulesHolder grayReleaseRulesHolder;
+		private final ReleaseMessageServiceWithCache releaseMessageServiceWithCache;
+		private final ConfigService configService;
 
-    public MessageScannerConfiguration(
-        final NotificationController notificationController,
-        final ConfigFileController configFileController,
-        final NotificationControllerV2 notificationControllerV2,
-        final GrayReleaseRulesHolder grayReleaseRulesHolder,
-        final ReleaseMessageServiceWithCache releaseMessageServiceWithCache,
-        final ConfigService configService) {
-      this.notificationController = notificationController;
-      this.configFileController = configFileController;
-      this.notificationControllerV2 = notificationControllerV2;
-      this.grayReleaseRulesHolder = grayReleaseRulesHolder;
-      this.releaseMessageServiceWithCache = releaseMessageServiceWithCache;
-      this.configService = configService;
-    }
+		public MessageScannerConfiguration(final NotificationController notificationController,
+				final ConfigFileController configFileController,
+				final NotificationControllerV2 notificationControllerV2,
+				final GrayReleaseRulesHolder grayReleaseRulesHolder,
+				final ReleaseMessageServiceWithCache releaseMessageServiceWithCache,
+				final ConfigService configService) {
+			this.notificationController = notificationController;
+			this.configFileController = configFileController;
+			this.notificationControllerV2 = notificationControllerV2;
+			this.grayReleaseRulesHolder = grayReleaseRulesHolder;
+			this.releaseMessageServiceWithCache = releaseMessageServiceWithCache;
+			this.configService = configService;
+		}
 
-    @Bean
-    public ReleaseMessageScanner releaseMessageScanner() {
-      ReleaseMessageScanner releaseMessageScanner = new ReleaseMessageScanner();
-      //0. handle release message cache
-      releaseMessageScanner.addMessageListener(releaseMessageServiceWithCache);
-      //1. handle gray release rule
-      releaseMessageScanner.addMessageListener(grayReleaseRulesHolder);
-      //2. handle server cache
-      releaseMessageScanner.addMessageListener(configService);
-      releaseMessageScanner.addMessageListener(configFileController);
-      //3. notify clients
-      releaseMessageScanner.addMessageListener(notificationControllerV2);
-      releaseMessageScanner.addMessageListener(notificationController);
-      return releaseMessageScanner;
-    }
-  }
+		@Bean
+		public ReleaseMessageScanner releaseMessageScanner() {
+			ReleaseMessageScanner releaseMessageScanner = new ReleaseMessageScanner();
+			// 0. handle release message cache
+			releaseMessageScanner.addMessageListener(releaseMessageServiceWithCache);
+			// 1. handle gray release rule
+			releaseMessageScanner.addMessageListener(grayReleaseRulesHolder);
+			// 2. handle server cache
+			releaseMessageScanner.addMessageListener(configService);
+			releaseMessageScanner.addMessageListener(configFileController);
+			// 3. notify clients
+			releaseMessageScanner.addMessageListener(notificationControllerV2);
+			releaseMessageScanner.addMessageListener(notificationController);
+			return releaseMessageScanner;
+		}
+	}
 
 }

@@ -68,8 +68,15 @@ public class NamespaceAcquireLockAspect {
         acquireLock(item.getNamespaceId(), operator);
     }
 
+    /**
+     * 尝试获取锁
+     * @param appId
+     * @param clusterName
+     * @param namespaceName
+     * @param currentUser
+     */
     void acquireLock(String appId, String clusterName, String namespaceName, String currentUser) {
-        // 当关闭锁定 Namespace 开关时，直接返回
+        // 当关闭锁定 Namespace 开关时，直接返回(可以配置)
         if (bizConfig.isNamespaceLockSwitchOff()) {
             return;
         }
@@ -105,9 +112,11 @@ public class NamespaceAcquireLockAspect {
 
         long namespaceId = namespace.getId();
 
+        // 获得 NamespaceLock 对象
         NamespaceLock namespaceLock = namespaceLockService.findLock(namespaceId);
         if (namespaceLock == null) {
             try {
+            	// 锁定(就是插入记录, 唯一主键, 插入失败会报错)
                 tryLock(namespaceId, currentUser);
                 // lock success
             } catch (DataIntegrityViolationException e) {
@@ -115,6 +124,7 @@ public class NamespaceAcquireLockAspect {
                 // 唯一索引重复, 重新获取锁对象
                 namespaceLock = namespaceLockService.findLock(namespaceId);
                 // 校验获得锁的是不是自己
+                // 如果此时namespaceLock又被删除了, 或namespaceLock的操作人不是自己, 都会抛出异常, 即获取锁失败
                 checkLock(namespace, namespaceLock, currentUser);
             } catch (Exception e) {
                 logger.error("try lock error", e);
@@ -122,7 +132,7 @@ public class NamespaceAcquireLockAspect {
             }
         } else {
             // check lock owner is current user
-            // 校验获得锁的是不是自己
+            // 校验获得锁的是不是自己(不是的话拋异常, 从而实现限制修改人)
             checkLock(namespace, namespaceLock, currentUser);
         }
     }
@@ -142,6 +152,13 @@ public class NamespaceAcquireLockAspect {
         namespaceLockService.tryLock(lock);
     }
 
+    /**
+     * namespaceLock对象不存在的话拋异常<br> 
+     * 存在的话, 判断NamespaceLock锁定人是不是currentUser, 不是的话抛出异常;
+     * @param namespace
+     * @param namespaceLock
+     * @param currentUser
+     */
     private void checkLock(Namespace namespace, NamespaceLock namespaceLock, String currentUser) {
         if (namespaceLock == null) {
             throw new ServiceException(
