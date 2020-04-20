@@ -19,6 +19,7 @@ public interface ConfigRepository {
     public Properties getConfig();
 
     /**
+     * 设置上游的 Repository 。主要用于 LocalFileConfigRepository ，从 Config Service 读取配置，缓存在本地文件。<br>
      * Set the fallback repo for this repository.
      * 
      * @param upstreamConfigRepository
@@ -27,6 +28,7 @@ public interface ConfigRepository {
     public void setUpstreamRepository(ConfigRepository upstreamConfigRepository);
 
     /**
+     * 监听 Repository 的配置的变化。<br>
      * Add change listener.
      * 
      * @param listener
