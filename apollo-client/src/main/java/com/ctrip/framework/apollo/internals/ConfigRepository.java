@@ -1,40 +1,51 @@
 package com.ctrip.framework.apollo.internals;
 
-import com.ctrip.framework.apollo.enums.ConfigSourceType;
 import java.util.Properties;
 
+import com.ctrip.framework.apollo.enums.ConfigSourceType;
+
 /**
+ * 作为 Client 的 Repository ( 类似 DAO ) ，读取配置。
+ * 
  * @author Jason Song(song_s@ctrip.com)
  */
 public interface ConfigRepository {
-  /**
-   * Get the config from this repository.
-   * @return config
-   */
-  public Properties getConfig();
+    /**
+     * 读取配置<br>
+     * Get the config from this repository.
+     * 
+     * @return config
+     */
+    public Properties getConfig();
 
-  /**
-   * Set the fallback repo for this repository.
-   * @param upstreamConfigRepository the upstream repo
-   */
-  public void setUpstreamRepository(ConfigRepository upstreamConfigRepository);
+    /**
+     * Set the fallback repo for this repository.
+     * 
+     * @param upstreamConfigRepository
+     *            the upstream repo
+     */
+    public void setUpstreamRepository(ConfigRepository upstreamConfigRepository);
 
-  /**
-   * Add change listener.
-   * @param listener the listener to observe the changes
-   */
-  public void addChangeListener(RepositoryChangeListener listener);
+    /**
+     * Add change listener.
+     * 
+     * @param listener
+     *            the listener to observe the changes
+     */
+    public void addChangeListener(RepositoryChangeListener listener);
 
-  /**
-   * Remove change listener.
-   * @param listener the listener to remove
-   */
-  public void removeChangeListener(RepositoryChangeListener listener);
+    /**
+     * Remove change listener.
+     * 
+     * @param listener
+     *            the listener to remove
+     */
+    public void removeChangeListener(RepositoryChangeListener listener);
 
-  /**
-   * Return the config's source type, i.e. where is the config loaded from
-   *
-   * @return the config's source type
-   */
-  public ConfigSourceType getSourceType();
+    /**
+     * Return the config's source type, i.e. where is the config loaded from
+     *
+     * @return the config's source type
+     */
+    public ConfigSourceType getSourceType();
 }
