@@ -1,7 +1,5 @@
 package com.ctrip.framework.apollo.biz.entity;
 
-import com.google.common.base.MoreObjects;
-
 import java.util.Date;
 
 import javax.persistence.Column;
@@ -13,139 +11,152 @@ import javax.persistence.PrePersist;
 import javax.persistence.PreUpdate;
 import javax.persistence.Table;
 
+import com.google.common.base.MoreObjects;
+
 /**
+ * Instance Config 实体，记录 Instance 对 Namespace 的配置的获取情况。如果一个 Instance 使用了多个
+ * Namespace ，则会记录多条 InstanceConfig 。<br>
+ * instanceId + configAppId + ConfigNamespaceName 组成唯一索引，因为一个 Instance 可以使用多个
+ * Namespace 。
+ * 
  * @author Jason Song(song_s@ctrip.com)
  */
 @Entity
 @Table(name = "InstanceConfig")
 public class InstanceConfig {
-  @Id
-  @GeneratedValue(strategy = GenerationType.IDENTITY)
-  @Column(name = "Id")
-  private long id;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "Id")
+    private long id;
+    /**
+     * Instance 编号，指向 {@link Instance#id}
+     */
+    @Column(name = "InstanceId")
+    private long instanceId;
+    /**
+     * App 编号
+     */
+    @Column(name = "ConfigAppId", nullable = false)
+    private String configAppId;
+    /**
+     * Cluster 名字
+     */
+    @Column(name = "ConfigClusterName", nullable = false)
+    private String configClusterName;
+    /**
+     * Namespace 名字
+     */
+    @Column(name = "ConfigNamespaceName", nullable = false)
+    private String configNamespaceName;
+    /**
+     * Release Key ，对应 {@link Release#releaseKey}
+     */
+    @Column(name = "ReleaseKey", nullable = false)
+    private String releaseKey;
+    /**
+     * 配置下发时间
+     */
+    @Column(name = "ReleaseDeliveryTime", nullable = false)
+    private Date releaseDeliveryTime;
 
-  @Column(name = "InstanceId")
-  private long instanceId;
+    @Column(name = "DataChange_CreatedTime", nullable = false)
+    private Date dataChangeCreatedTime;
 
-  @Column(name = "ConfigAppId", nullable = false)
-  private String configAppId;
+    @Column(name = "DataChange_LastTime")
+    private Date dataChangeLastModifiedTime;
 
-  @Column(name = "ConfigClusterName", nullable = false)
-  private String configClusterName;
-
-  @Column(name = "ConfigNamespaceName", nullable = false)
-  private String configNamespaceName;
-
-  @Column(name = "ReleaseKey", nullable = false)
-  private String releaseKey;
-
-  @Column(name = "ReleaseDeliveryTime", nullable = false)
-  private Date releaseDeliveryTime;
-
-  @Column(name = "DataChange_CreatedTime", nullable = false)
-  private Date dataChangeCreatedTime;
-
-  @Column(name = "DataChange_LastTime")
-  private Date dataChangeLastModifiedTime;
-
-  @PrePersist
-  protected void prePersist() {
-    if (this.dataChangeCreatedTime == null) {
-      dataChangeCreatedTime = new Date();
+    @PrePersist
+    protected void prePersist() {
+        if (this.dataChangeCreatedTime == null) {
+            dataChangeCreatedTime = new Date();
+        }
+        if (this.dataChangeLastModifiedTime == null) {
+            dataChangeLastModifiedTime = dataChangeCreatedTime;
+        }
     }
-    if (this.dataChangeLastModifiedTime == null) {
-      dataChangeLastModifiedTime = dataChangeCreatedTime;
+
+    @PreUpdate
+    protected void preUpdate() {
+        this.dataChangeLastModifiedTime = new Date();
     }
-  }
 
-  @PreUpdate
-  protected void preUpdate() {
-    this.dataChangeLastModifiedTime = new Date();
-  }
+    public long getId() {
+        return id;
+    }
 
-  public long getId() {
-    return id;
-  }
+    public void setId(long id) {
+        this.id = id;
+    }
 
-  public void setId(long id) {
-    this.id = id;
-  }
+    public long getInstanceId() {
+        return instanceId;
+    }
 
-  public long getInstanceId() {
-    return instanceId;
-  }
+    public void setInstanceId(long instanceId) {
+        this.instanceId = instanceId;
+    }
 
-  public void setInstanceId(long instanceId) {
-    this.instanceId = instanceId;
-  }
+    public String getConfigAppId() {
+        return configAppId;
+    }
 
-  public String getConfigAppId() {
-    return configAppId;
-  }
+    public void setConfigAppId(String configAppId) {
+        this.configAppId = configAppId;
+    }
 
-  public void setConfigAppId(String configAppId) {
-    this.configAppId = configAppId;
-  }
+    public String getConfigNamespaceName() {
+        return configNamespaceName;
+    }
 
-  public String getConfigNamespaceName() {
-    return configNamespaceName;
-  }
+    public void setConfigNamespaceName(String configNamespaceName) {
+        this.configNamespaceName = configNamespaceName;
+    }
 
-  public void setConfigNamespaceName(String configNamespaceName) {
-    this.configNamespaceName = configNamespaceName;
-  }
+    public String getReleaseKey() {
+        return releaseKey;
+    }
 
-  public String getReleaseKey() {
-    return releaseKey;
-  }
+    public void setReleaseKey(String releaseKey) {
+        this.releaseKey = releaseKey;
+    }
 
-  public void setReleaseKey(String releaseKey) {
-    this.releaseKey = releaseKey;
-  }
+    public Date getDataChangeCreatedTime() {
+        return dataChangeCreatedTime;
+    }
 
-  public Date getDataChangeCreatedTime() {
-    return dataChangeCreatedTime;
-  }
+    public void setDataChangeCreatedTime(Date dataChangeCreatedTime) {
+        this.dataChangeCreatedTime = dataChangeCreatedTime;
+    }
 
-  public void setDataChangeCreatedTime(Date dataChangeCreatedTime) {
-    this.dataChangeCreatedTime = dataChangeCreatedTime;
-  }
+    public Date getDataChangeLastModifiedTime() {
+        return dataChangeLastModifiedTime;
+    }
 
-  public Date getDataChangeLastModifiedTime() {
-    return dataChangeLastModifiedTime;
-  }
+    public void setDataChangeLastModifiedTime(Date dataChangeLastModifiedTime) {
+        this.dataChangeLastModifiedTime = dataChangeLastModifiedTime;
+    }
 
-  public void setDataChangeLastModifiedTime(Date dataChangeLastModifiedTime) {
-    this.dataChangeLastModifiedTime = dataChangeLastModifiedTime;
-  }
+    public String getConfigClusterName() {
+        return configClusterName;
+    }
 
-  public String getConfigClusterName() {
-    return configClusterName;
-  }
+    public void setConfigClusterName(String configClusterName) {
+        this.configClusterName = configClusterName;
+    }
 
-  public void setConfigClusterName(String configClusterName) {
-    this.configClusterName = configClusterName;
-  }
+    public Date getReleaseDeliveryTime() {
+        return releaseDeliveryTime;
+    }
 
-  public Date getReleaseDeliveryTime() {
-    return releaseDeliveryTime;
-  }
+    public void setReleaseDeliveryTime(Date releaseDeliveryTime) {
+        this.releaseDeliveryTime = releaseDeliveryTime;
+    }
 
-  public void setReleaseDeliveryTime(Date releaseDeliveryTime) {
-    this.releaseDeliveryTime = releaseDeliveryTime;
-  }
-
-  @Override
-  public String toString() {
-    return MoreObjects.toStringHelper(this)
-        .omitNullValues()
-        .add("id", id)
-        .add("configAppId", configAppId)
-        .add("configClusterName", configClusterName)
-        .add("configNamespaceName", configNamespaceName)
-        .add("releaseKey", releaseKey)
-        .add("dataChangeCreatedTime", dataChangeCreatedTime)
-        .add("dataChangeLastModifiedTime", dataChangeLastModifiedTime)
-        .toString();
-  }
+    @Override
+    public String toString() {
+        return MoreObjects.toStringHelper(this).omitNullValues().add("id", id).add("configAppId", configAppId)
+                .add("configClusterName", configClusterName).add("configNamespaceName", configNamespaceName)
+                .add("releaseKey", releaseKey).add("dataChangeCreatedTime", dataChangeCreatedTime)
+                .add("dataChangeLastModifiedTime", dataChangeLastModifiedTime).toString();
+    }
 }

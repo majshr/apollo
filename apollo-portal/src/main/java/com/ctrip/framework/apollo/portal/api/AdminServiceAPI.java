@@ -41,7 +41,8 @@ public class AdminServiceAPI {
 
     @Service
     public static class HealthAPI extends API {
-
+        // "/health" 是springboot监控的那个api
+        // 随机调用环境中的多个admin service中的一个, 有一个成功即环境可用
         public Health health(Env env) {
             return restTemplate.get(env, "/health", Health.class);
         }

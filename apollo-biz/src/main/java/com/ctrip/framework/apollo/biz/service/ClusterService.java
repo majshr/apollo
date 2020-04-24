@@ -71,6 +71,13 @@ public class ClusterService {
         return savedCluster;
     }
 
+    /**
+     * 保存cluster, 不处理AppNamespace
+     * 
+     * @param entity
+     * @return Cluster
+     * @date: 2020年4月24日 下午5:17:00
+     */
     @Transactional
     public Cluster saveWithoutInstanceOfAppNamespaces(Cluster entity) {
         // 判断 `name` 在 App 下是否已经存在对应的 Cluster 对象。

@@ -354,7 +354,7 @@ public class NamespaceService {
 	@Transactional
 	public void instanceOfAppNamespaces(String appId, String clusterName, String createBy) {
 
-		// 获得所有的 AppNamespace 对象
+        // 获得app下所有的 AppNamespace 对象
 		List<AppNamespace> appNamespaces = appNamespaceService.findByAppId(appId);
 		// 循环 AppNamespace 数组，创建并保存 Namespace 到数据库
 		for (AppNamespace appNamespace : appNamespaces) {

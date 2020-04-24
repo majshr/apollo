@@ -1,32 +1,36 @@
 package com.ctrip.framework.apollo.tracer.spi;
 
 /**
+ * 自定义事务信息接口
+ * 
  * @author Jason Song(song_s@ctrip.com)
  */
 public interface Transaction {
-  String SUCCESS = "0";
+    String SUCCESS = "0";
 
-  /**
-   * Set the message status.
-   *
-   * @param status message status. "0" means success, otherwise error code.
-   */
-  public void setStatus(String status);
+    /**
+     * Set the message status.
+     *
+     * @param status
+     *            message status. "0" means success, otherwise error code.
+     */
+    public void setStatus(String status);
 
-  /**
-   * Set the message status with exception class name.
-   *
-   * @param e exception.
-   */
-  public void setStatus(Throwable e);
+    /**
+     * Set the message status with exception class name.
+     *
+     * @param e
+     *            exception.
+     */
+    public void setStatus(Throwable e);
 
-  /**
-   * add one key-value pair to the message.
-   */
-  public void addData(String key, Object value);
+    /**
+     * add one key-value pair to the message.
+     */
+    public void addData(String key, Object value);
 
-  /**
-   * Complete the message construction.
-   */
-  public void complete();
+    /**
+     * Complete the message construction.
+     */
+    public void complete();
 }

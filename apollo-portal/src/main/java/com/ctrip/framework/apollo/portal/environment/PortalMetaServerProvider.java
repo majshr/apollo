@@ -1,31 +1,37 @@
 package com.ctrip.framework.apollo.portal.environment;
 
 /**
- * For the supporting of multiple meta server address providers.
- * From configuration file,
- * from OS environment,
- * From database,
- * ...
- * Just implement this interface
+ * MetaServer信息提供者接口(有多种实现, 从数据库查询配置, 从环境变量, 配置文件查询配置)<br>
+ * For the supporting of multiple meta server address providers. From
+ * configuration file, from OS environment, From database, ... Just implement
+ * this interface
+ * 
  * @author wxq
  */
 public interface PortalMetaServerProvider {
 
-  /**
-   * @param targetEnv environment
-   * @return meta server address matched environment
-   */
+    /**
+     * 获取MetaServer地址
+     * 
+     * @param targetEnv
+     *            environment
+     * @return meta server address matched environment
+     */
   String getMetaServerAddress(Env targetEnv);
 
-  /**
-   * @param targetEnv environment
-   * @return environment's meta server address exists or not
-   */
+    /**
+     * 判断是否存在
+     * 
+     * @param targetEnv
+     *            environment
+     * @return environment's meta server address exists or not
+     */
   boolean exists(Env targetEnv);
 
-  /**
-   * reload the meta server address in runtime
-   */
+    /**
+     * 加载地址<br>
+     * reload the meta server address in runtime
+     */
   void reload();
 
 }

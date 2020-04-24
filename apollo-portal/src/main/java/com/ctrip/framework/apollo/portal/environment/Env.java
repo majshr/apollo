@@ -11,6 +11,8 @@ import com.ctrip.framework.apollo.core.utils.StringUtils;
 import com.google.common.base.Preconditions;
 
 /**
+ * 环境信息
+ * 
  * @author wxq
  */
 public class Env {
@@ -20,7 +22,10 @@ public class Env {
     // name of environment, cannot be null
     private final String name;
 
-    // use to cache Env
+    /**
+     * use to cache Env<br>
+     * env缓存
+     */
     private static final Map<String, Env> STRING_ENV_MAP = new ConcurrentHashMap<>();;
 
     // default environments
@@ -44,7 +49,8 @@ public class Env {
     }
 
     /**
-     * add some change to environment name trim and to upper
+     * add some change to environment name trim and to upper<br>
+     * 转为大写
      * 
      * @param environmentName
      * @return
@@ -54,7 +60,8 @@ public class Env {
     }
 
     /**
-     * logic same as
+     * logic same as<br>
+     * envName转换为对应环境变量
      * 
      * @see com.ctrip.framework.apollo.core.enums.EnvUtils transformEnv
      * @param envName
@@ -90,7 +97,8 @@ public class Env {
     }
 
     /**
-     * a environment name exist or not
+     * a environment name exist or not<br>
+     * 判断环境名称是否存在
      * 
      * @param name
      * @return
@@ -101,7 +109,8 @@ public class Env {
     }
 
     /**
-     * add an environment
+     * add an environment<br>
+     * 添加环境
      * 
      * @param name
      * @return
@@ -123,8 +132,10 @@ public class Env {
     }
 
     /**
-     * replace valueOf in enum But what would happened if environment not exist?
-     *
+     * replace valueOf in enum But what would happened if environment not
+     * exist?<br>
+     * 获取name对应的环境变量对象
+     * 
      * @param name
      * @throws IllegalArgumentException
      *             if this existed environment has no Env with the specified
@@ -206,7 +217,8 @@ public class Env {
     }
 
     /**
-     * conversion key from {@link String} to {@link Env}
+     * conversion key from {@link String} to {@link Env}<br>
+     * 参数map的String类型的key转为Env类型, 返回map
      * 
      * @param metaServerAddresses
      *            key is environment, value is environment's meta server address

@@ -70,6 +70,14 @@ public class NamespaceService {
         this.rolePermissionService = rolePermissionService;
     }
 
+    /**
+     * 创建namespace
+     * 
+     * @param env
+     * @param namespace
+     * @return NamespaceDTO
+     * @date: 2020年4月24日 下午5:25:57
+     */
     public NamespaceDTO createNamespace(Env env, NamespaceDTO namespace) {
         // 设置 NamespaceDTO 的创建和修改人为当前管理员
         if (StringUtils.isEmpty(namespace.getDataChangeCreatedBy())) {

@@ -1,0 +1,25 @@
+注：如果希望独立启动apollo-configservice和apollo-adminservice，
+可以把Main Class分别换成 
+com.ctrip.framework.apollo.configservice.ConfigServiceApplication和 
+com.ctrip.framework.apollo.adminservice.AdminServiceApplication
+
+#虚拟机启动参数
+-Dapollo_profile=github
+-Dspring.datasource.url=jdbc:mysql://localhost:3306/ApolloConfigDB?characterEncoding=utf8
+-Dspring.datasource.username=root
+-Dspring.datasource.password=root
+# 自定义日志路径
+-Dlogging.file=/your-path/apollo-assembly.log
+
+#Program arguments栏配置
+--configservice --adminservice
+
+
+partol
+-Dapollo_profile=github,auth
+-Ddev_meta=http://localhost:8080/
+-Dapollo.meta=http://localhost:8080/
+-Dserver.port=8070
+-Dspring.datasource.url=jdbc:mysql://localhost:3306/ApolloPortalDB?characterEncoding=utf8
+-Dspring.datasource.username=root
+-Dspring.datasource.password=root
