@@ -23,6 +23,9 @@ import java.util.stream.Collectors;
  */
 @Component
 public class WatchKeysUtil {
+	/**
+	 * "+" 拼接器
+	 */
 	private static final Joiner STRING_JOINER = Joiner.on(ConfigConsts.CLUSTER_NAMESPACE_SEPARATOR);
 	private final AppNamespaceServiceWithCache appNamespaceService;
 
@@ -53,7 +56,7 @@ public class WatchKeysUtil {
 
 	/**
 	 * 组装所有的 Watch Key Multimap 。<br>
-	 * 其中 Key 为 Namespace 的名字，Value 为 Watch Key 集合。<br>
+	 * 其中 Key 为 Namespace 的名字，Value 为 Watch Key(AppId+Cluster+Namespace) 集合。<br>
 	 * @param appId App 编号
 	 * @param clusterName Cluster 名
 	 * @param namespaces Namespace 的名字的数组
@@ -69,9 +72,9 @@ public class WatchKeysUtil {
 		// 如果不是仅监听 'application' Namespace ，处理其关联来的 Namespace 。
 		// Every app has an 'application' namespace
 		if (!(namespaces.size() == 1 && namespaces.contains(ConfigConsts.NAMESPACE_APPLICATION))) {
-			// 获得属于该 App 的 Namespace 的名字的集合
+			// 获得属于该 App 的 AppNamespace 的名字的集合
 			Set<String> namespacesBelongToAppId = namespacesBelongToAppId(appId, namespaces);
-			// 进行集合差异计算，获得关联来的 Namespace 的名字的集合(第一个集合中存在, 而第二个集合中不存在)
+			// 进行集合差异计算，获得关联来的 Namespace 的名字的集合(第一个集合中存在, 而第二个集合中不存在, 为public类型)
 			Set<String> publicNamespaces = Sets.difference(namespaces, namespacesBelongToAppId);
 
 			// 添加到 Watch Key Multimap 中
@@ -191,7 +194,7 @@ public class WatchKeysUtil {
 	}
 
 	/**
-	 * 获得属于该 App 的 Namespace 的名字的集合
+	 * 获得属于该 App 的 AppNamespace 的名字的集合
 	 *
 	 * @param appId App 编号
 	 * @param namespaces Namespace 名数组

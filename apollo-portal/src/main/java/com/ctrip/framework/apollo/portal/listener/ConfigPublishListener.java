@@ -21,134 +21,165 @@ import javax.annotation.PostConstruct;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+/**
+ * 配置发布事件监听器
+ * @author maj
+ *
+ */
 @Component
 public class ConfigPublishListener {
 
-  private final ReleaseHistoryService releaseHistoryService;
-  private final EmailService emailService;
-  private final NormalPublishEmailBuilder normalPublishEmailBuilder;
-  private final GrayPublishEmailBuilder grayPublishEmailBuilder;
-  private final RollbackEmailBuilder rollbackEmailBuilder;
-  private final MergeEmailBuilder mergeEmailBuilder;
-  private final PortalConfig portalConfig;
-  private final MQService mqService;
+	private final ReleaseHistoryService releaseHistoryService;
+	private final EmailService emailService;
+	private final NormalPublishEmailBuilder normalPublishEmailBuilder;
+	private final GrayPublishEmailBuilder grayPublishEmailBuilder;
+	private final RollbackEmailBuilder rollbackEmailBuilder;
+	private final MergeEmailBuilder mergeEmailBuilder;
+	private final PortalConfig portalConfig;
+	private final MQService mqService;
 
-  private ExecutorService executorService;
+	private ExecutorService executorService;
 
-  public ConfigPublishListener(
-      final ReleaseHistoryService releaseHistoryService,
-      final EmailService emailService,
-      final NormalPublishEmailBuilder normalPublishEmailBuilder,
-      final GrayPublishEmailBuilder grayPublishEmailBuilder,
-      final RollbackEmailBuilder rollbackEmailBuilder,
-      final MergeEmailBuilder mergeEmailBuilder,
-      final PortalConfig portalConfig,
-      final MQService mqService) {
-    this.releaseHistoryService = releaseHistoryService;
-    this.emailService = emailService;
-    this.normalPublishEmailBuilder = normalPublishEmailBuilder;
-    this.grayPublishEmailBuilder = grayPublishEmailBuilder;
-    this.rollbackEmailBuilder = rollbackEmailBuilder;
-    this.mergeEmailBuilder = mergeEmailBuilder;
-    this.portalConfig = portalConfig;
-    this.mqService = mqService;
-  }
+	public ConfigPublishListener(final ReleaseHistoryService releaseHistoryService, final EmailService emailService,
+			final NormalPublishEmailBuilder normalPublishEmailBuilder,
+			final GrayPublishEmailBuilder grayPublishEmailBuilder, final RollbackEmailBuilder rollbackEmailBuilder,
+			final MergeEmailBuilder mergeEmailBuilder, final PortalConfig portalConfig, final MQService mqService) {
+		this.releaseHistoryService = releaseHistoryService;
+		this.emailService = emailService;
+		this.normalPublishEmailBuilder = normalPublishEmailBuilder;
+		this.grayPublishEmailBuilder = grayPublishEmailBuilder;
+		this.rollbackEmailBuilder = rollbackEmailBuilder;
+		this.mergeEmailBuilder = mergeEmailBuilder;
+		this.portalConfig = portalConfig;
+		this.mqService = mqService;
+	}
 
-  @PostConstruct
-  public void init() {
-    executorService = Executors.newSingleThreadExecutor(ApolloThreadFactory.create("ConfigPublishNotify", true));
-  }
+	// 初始化线程池
+	@PostConstruct
+	public void init() {
+		executorService = Executors.newSingleThreadExecutor(ApolloThreadFactory.create("ConfigPublishNotify", true));
+	}
 
-  @EventListener
-  public void onConfigPublish(ConfigPublishEvent event) {
-    executorService.submit(new ConfigPublishNotifyTask(event.getConfigPublishInfo()));
-  }
+	/**
+	 * 事件发布后执行
+	 * @param event
+	 */
+	@EventListener
+	public void onConfigPublish(ConfigPublishEvent event) {
+		executorService.submit(new ConfigPublishNotifyTask(event.getConfigPublishInfo()));
+	}
 
+	/**
+	 * 配置发布notify任务
+	 * @author maj
+	 *
+	 */
+	private class ConfigPublishNotifyTask implements Runnable {
 
-  private class ConfigPublishNotifyTask implements Runnable {
+		// 发布信息
+		private ConfigPublishEvent.ConfigPublishInfo publishInfo;
 
-    private ConfigPublishEvent.ConfigPublishInfo publishInfo;
+		ConfigPublishNotifyTask(ConfigPublishEvent.ConfigPublishInfo publishInfo) {
+			this.publishInfo = publishInfo;
+		}
 
-    ConfigPublishNotifyTask(ConfigPublishEvent.ConfigPublishInfo publishInfo) {
-      this.publishInfo = publishInfo;
-    }
+		@Override
+		public void run() {
+			// 获取最新历史发布版本
+			ReleaseHistoryBO releaseHistory = getReleaseHistory();
+			if (releaseHistory == null) {
+				Tracer.logError("Load release history failed", null);
+				return;
+			}
+			
+			// 发邮件
+			sendPublishEmail(releaseHistory);
 
-    @Override
-    public void run() {
-      ReleaseHistoryBO releaseHistory = getReleaseHistory();
-      if (releaseHistory == null) {
-        Tracer.logError("Load release history failed", null);
-        return;
-      }
+			sendPublishMsg(releaseHistory);
+		}
 
-      sendPublishEmail(releaseHistory);
+		/**
+		 * 获取最新发布历史信息
+		 * @return
+		 */
+		private ReleaseHistoryBO getReleaseHistory() {
+			Env env = publishInfo.getEnv();
 
-      sendPublishMsg(releaseHistory);
-    }
+			int operation = publishInfo.isMergeEvent() ? ReleaseOperation.GRAY_RELEASE_MERGE_TO_MASTER
+					: publishInfo.isRollbackEvent() ? ReleaseOperation.ROLLBACK
+							: publishInfo.isNormalPublishEvent() ? ReleaseOperation.NORMAL_RELEASE
+									: publishInfo.isGrayPublishEvent() ? ReleaseOperation.GRAY_RELEASE : -1;
 
-    private ReleaseHistoryBO getReleaseHistory() {
-      Env env = publishInfo.getEnv();
+			if (operation == -1) {
+				return null;
+			}
 
-      int operation = publishInfo.isMergeEvent() ? ReleaseOperation.GRAY_RELEASE_MERGE_TO_MASTER :
-                      publishInfo.isRollbackEvent() ? ReleaseOperation.ROLLBACK :
-                      publishInfo.isNormalPublishEvent() ? ReleaseOperation.NORMAL_RELEASE :
-                      publishInfo.isGrayPublishEvent() ? ReleaseOperation.GRAY_RELEASE : -1;
+			if (publishInfo.isRollbackEvent()) {
+				return releaseHistoryService.findLatestByPreviousReleaseIdAndOperation(env,
+						publishInfo.getPreviousReleaseId(), operation);
+			}
+			return releaseHistoryService.findLatestByReleaseIdAndOperation(env, publishInfo.getReleaseId(), operation);
 
-      if (operation == -1) {
-        return null;
-      }
+		}
 
-      if (publishInfo.isRollbackEvent()) {
-        return releaseHistoryService
-            .findLatestByPreviousReleaseIdAndOperation(env, publishInfo.getPreviousReleaseId(), operation);
-      }
-      return releaseHistoryService.findLatestByReleaseIdAndOperation(env, publishInfo.getReleaseId(), operation);
+		/**
+		 * 发送发布邮件
+		 * @param releaseHistory
+		 */
+		private void sendPublishEmail(ReleaseHistoryBO releaseHistory) {
+			Env env = publishInfo.getEnv();
 
-    }
+			if (!portalConfig.emailSupportedEnvs().contains(env)) {
+				return;
+			}
 
-    private void sendPublishEmail(ReleaseHistoryBO releaseHistory) {
-      Env env = publishInfo.getEnv();
+			int realOperation = releaseHistory.getOperation();
 
-      if (!portalConfig.emailSupportedEnvs().contains(env)) {
-        return;
-      }
+			Email email = null;
+			try {
+				email = buildEmail(env, releaseHistory, realOperation);
+			} catch (Throwable e) {
+				Tracer.logError("build email failed.", e);
+			}
 
-      int realOperation = releaseHistory.getOperation();
+			if (email != null) {
+				emailService.send(email);
+			}
+		}
 
-      Email email = null;
-      try {
-        email = buildEmail(env, releaseHistory, realOperation);
-      } catch (Throwable e) {
-        Tracer.logError("build email failed.", e);
-      }
+		/**
+		 * 发送发布消息到mq
+		 * @param releaseHistory
+		 */
+		private void sendPublishMsg(ReleaseHistoryBO releaseHistory) {
+			mqService.sendPublishMsg(publishInfo.getEnv(), releaseHistory);
+		}
 
-      if (email != null) {
-        emailService.send(email);
-      }
-    }
-
-    private void sendPublishMsg(ReleaseHistoryBO releaseHistory) {
-      mqService.sendPublishMsg(publishInfo.getEnv(), releaseHistory);
-    }
-
-    private Email buildEmail(Env env, ReleaseHistoryBO releaseHistory, int operation) {
-      switch (operation) {
-        case ReleaseOperation.GRAY_RELEASE: {
-          return grayPublishEmailBuilder.build(env, releaseHistory);
-        }
-        case ReleaseOperation.NORMAL_RELEASE: {
-          return normalPublishEmailBuilder.build(env, releaseHistory);
-        }
-        case ReleaseOperation.ROLLBACK: {
-          return rollbackEmailBuilder.build(env, releaseHistory);
-        }
-        case ReleaseOperation.GRAY_RELEASE_MERGE_TO_MASTER: {
-          return mergeEmailBuilder.build(env, releaseHistory);
-        }
-        default:
-          return null;
-      }
-    }
-  }
+		/**
+		 * 构建邮件
+		 * @param env
+		 * @param releaseHistory
+		 * @param operation
+		 * @return
+		 */
+		private Email buildEmail(Env env, ReleaseHistoryBO releaseHistory, int operation) {
+			switch (operation) {
+			case ReleaseOperation.GRAY_RELEASE: {
+				return grayPublishEmailBuilder.build(env, releaseHistory);
+			}
+			case ReleaseOperation.NORMAL_RELEASE: {
+				return normalPublishEmailBuilder.build(env, releaseHistory);
+			}
+			case ReleaseOperation.ROLLBACK: {
+				return rollbackEmailBuilder.build(env, releaseHistory);
+			}
+			case ReleaseOperation.GRAY_RELEASE_MERGE_TO_MASTER: {
+				return mergeEmailBuilder.build(env, releaseHistory);
+			}
+			default:
+				return null;
+			}
+		}
+	}
 
 }

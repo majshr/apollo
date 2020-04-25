@@ -57,8 +57,8 @@ public class NotificationControllerV2 implements ReleaseMessageListener {
 	private static final Logger logger = LoggerFactory.getLogger(NotificationControllerV2.class);
 
 	/**
-	 * Watch Key 与 DeferredResultWrapper 的 Multimap<br>
-	 * key: 监听的key Value：DeferredResultWrapper(每个key对应多个等待通知的客户端) <br>
+	 * Watch Key 与 DeferredResultWrapper 的 Multimap; 维护所有请求<br>
+	 * key: 监听的key(ReleaseMessage.message) Value：DeferredResultWrapper(每个key对应多个等待通知的客户端) <br>
 	 * 目前 Apollo 的实现上，Watch Key 等价于 ReleaseMessage 的通知内容 message 字段<br>
 	 * 
 	 * 当请求的 Namespace 暂无新通知时，会将该 Namespace 对应的 Watch Key 们，注册到 deferredResults
@@ -68,6 +68,9 @@ public class NotificationControllerV2 implements ReleaseMessageListener {
 	private final Multimap<String, DeferredResultWrapper> deferredResults = Multimaps
 			.synchronizedSetMultimap(TreeMultimap.create(String.CASE_INSENSITIVE_ORDER, Ordering.natural()));
 
+	/**
+	 * "+" 拼接符
+	 */
 	private static final Splitter STRING_SPLITTER = Splitter.on(ConfigConsts.CLUSTER_NAMESPACE_SEPARATOR)
 			.omitEmptyStrings();
 
@@ -118,6 +121,7 @@ public class NotificationControllerV2 implements ReleaseMessageListener {
 			@RequestParam(value = "dataCenter", required = false) String dataCenter,
 			@RequestParam(value = "ip", required = false) String clientIp) {
 
+		// 客户端监听的namespace
 		// 解析 notificationsAsString 参数，创建 ApolloConfigNotification 数组。
 		List<ApolloConfigNotification> notifications = null;
 		try {
@@ -137,16 +141,15 @@ public class NotificationControllerV2 implements ReleaseMessageListener {
 			throw new BadRequestException("Invalid format of notifications: " + notificationsAsString);
 		}
 
-		// 创建 DeferredResultWrapper 对象
+		// 创建 DeferredResultWrapper 对象(对应单个请求)
 		DeferredResultWrapper deferredResultWrapper = new DeferredResultWrapper(bizConfig.longPollingTimeoutInMilli());
+		
 		// Namespace 集合
 		Set<String> namespaces = Sets.newHashSet();
 		// 客户端的通知 Map 。key 为 Namespace 名，value 为通知编号。
 		Map<String, Long> clientSideNotifications = Maps.newHashMap();
-
-		// 过滤并创建 ApolloConfigNotification Map
+		// 过滤并创建 ApolloConfigNotification Map(名字归一化处理)
 		Map<String, ApolloConfigNotification> filteredNotifications = filterNotifications(appId, notifications);
-		
 		// 循环 ApolloConfigNotification Map ，初始化上述变量。
 		for (Map.Entry<String, ApolloConfigNotification> notificationEntry : filteredNotifications.entrySet()) {
 			String normalizedNamespace = notificationEntry.getKey();
@@ -166,7 +169,7 @@ public class NotificationControllerV2 implements ReleaseMessageListener {
 			throw new BadRequestException("Invalid format of notifications: " + notificationsAsString);
 		}
 
-		// 组装 Watch Key Multimap
+		// 组装 Watch Key Multimap(Key 为 Namespace 的名字，Value 为 Watch Key)
 		Multimap<String, String> watchedKeysMap = watchKeysUtil.assembleAllWatchKeys(appId, cluster, namespaces,
 				dataCenter);
 		// 生成 Watch Key 集合
@@ -181,13 +184,14 @@ public class NotificationControllerV2 implements ReleaseMessageListener {
 		deferredResultWrapper.onTimeout(
 				() -> logWatchedKeys(watchedKeys, "Apollo.LongPoll.TimeOutKeys"));
 
-		// 注册结束事件
+		// 注册监听结束事件
 		deferredResultWrapper.onCompletion(() -> {
 			// unregister all keys
 			// 移除 Watch Key + DeferredResultWrapper 出 `deferredResults`
 			for (String key : watchedKeys) {
 				deferredResults.remove(key, deferredResultWrapper);
 			}
+			// 记录日志
 			logWatchedKeys(watchedKeys, "Apollo.LongPoll.CompletedKeys");
 		});
 
@@ -195,7 +199,7 @@ public class NotificationControllerV2 implements ReleaseMessageListener {
 		// 详见 `#handleMessage(...)` 方法。
 		// register all keys
 		for (String key : watchedKeys) {
-			// 是移除变化的key吗?
+			// 注册监听
 			this.deferredResults.put(key, deferredResultWrapper);
 		}
 
@@ -429,7 +433,7 @@ public class NotificationControllerV2 implements ReleaseMessageListener {
 	};
 
 	/**
-	 * (超时会执行)
+	 * 记录超时事件(超时会执行)
 	 * @param watchedKeys
 	 * @param eventName
 	 */

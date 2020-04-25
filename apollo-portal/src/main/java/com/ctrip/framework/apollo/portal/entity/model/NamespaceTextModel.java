@@ -4,6 +4,11 @@ import com.ctrip.framework.apollo.core.enums.ConfigFileFormat;
 import com.ctrip.framework.apollo.portal.environment.Env;
 import com.ctrip.framework.apollo.core.utils.StringUtils;
 
+/**
+ * Namespace对应的Text的Model
+ * @author maj
+ *
+ */
 public class NamespaceTextModel implements Verifiable {
 	/**
 	 * App 编号

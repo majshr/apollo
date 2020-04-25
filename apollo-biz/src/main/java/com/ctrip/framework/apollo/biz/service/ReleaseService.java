@@ -314,7 +314,7 @@ public class ReleaseService {
 	}
 
 	/**
-	 * 主干发布
+	 * 主干发布(保存Release对象, 保存ReleaseHistory对象)
 	 * @param namespace
 	 * @param releaseName
 	 * @param releaseComment

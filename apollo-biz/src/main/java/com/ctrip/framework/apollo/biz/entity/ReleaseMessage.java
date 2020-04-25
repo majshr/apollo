@@ -13,7 +13,7 @@ import javax.persistence.PrePersist;
 import javax.persistence.Table;
 
 /**
- * 发布消息<br>
+ * 发布消息(中间件中的消息, 实现为数据库实现)<br>
  * ReleaseMessage 设计的意图是作为配置发生变化的通知，所以对于同一个 Namespace ，仅需要保留其最新的 ReleaseMessage 记录即可。
  * 所以，在 「DatabaseMessageSender」 中，我们会看到，有后台任务不断清理旧的 ReleaseMessage 记录。
  * @author Jason Song(song_s@ctrip.com)

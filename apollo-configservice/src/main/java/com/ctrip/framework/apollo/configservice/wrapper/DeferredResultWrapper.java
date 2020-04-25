@@ -34,7 +34,7 @@ public class DeferredResultWrapper implements Comparable<DeferredResultWrapper> 
 	private Map<String, String> normalizedNamespaceNameToOriginalNamespaceName;
 	
 	/**
-	 * 响应的 DeferredResult 对象
+	 * 响应的 DeferredResult 对象(长轮询实现对象)
 	 */
 	private DeferredResult<ResponseEntity<List<ApolloConfigNotification>>> result;
 

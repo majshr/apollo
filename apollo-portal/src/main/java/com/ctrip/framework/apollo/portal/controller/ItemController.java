@@ -72,6 +72,7 @@ public class ItemController {
         model.setEnv(env);
         model.setNamespaceName(namespaceName);
 
+        // 批量更新一个 Namespace 下的 Item 们
         configService.updateConfigItemByText(model);
     }
 

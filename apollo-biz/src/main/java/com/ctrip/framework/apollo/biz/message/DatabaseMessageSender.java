@@ -21,6 +21,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
+ * 数据库实现消息发送
  * @author Jason Song(song_s@ctrip.com)
  */
 @Component
@@ -84,7 +85,9 @@ public class DatabaseMessageSender implements MessageSender {
 		}
 	}
 
+	
 	/**
+	 * spring调用, 启动定时任务<br>
 	 * 不断清理旧的 ReleaseMessage 记录的后台任务。
 	 */
 	@PostConstruct
@@ -109,7 +112,7 @@ public class DatabaseMessageSender implements MessageSender {
 	}
 
 	/**
-	 * 清理消息
+	 * 清理消息(清理id对应的消息, 的"AppId+Cluster+Namespace"相同的旧消息)
 	 * @param id
 	 */
 	private void cleanMessage(Long id) {
@@ -122,7 +125,7 @@ public class DatabaseMessageSender implements MessageSender {
 			return;
 		}
 		
-		// 循环删除相同消息内容( `message` )的老消息
+		// 循环删除相同消息内容( `message` )的老消息, 每次批量删除100条
 		while (hasMore && !Thread.currentThread().isInterrupted()) {
 			List<ReleaseMessage> messages = releaseMessageRepository.findFirst100ByMessageAndIdLessThanOrderByIdAsc(
 					releaseMessage.getMessage(), releaseMessage.getId());

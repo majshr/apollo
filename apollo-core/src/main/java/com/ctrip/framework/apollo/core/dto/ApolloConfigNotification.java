@@ -1,7 +1,7 @@
 package com.ctrip.framework.apollo.core.dto;
 
 /**
- * apollo配置通知信息
+ * apollo配置通知信息(通知哪个AppId+Cluster+Namespace发生了更新)
  * 
  * @author Jason Song(song_s@ctrip.com)
  */
