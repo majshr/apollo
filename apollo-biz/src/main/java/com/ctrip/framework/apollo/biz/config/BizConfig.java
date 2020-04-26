@@ -47,6 +47,12 @@ public class BizConfig extends RefreshableConfig {
         return Collections.singletonList(propertySource);
     }
 
+    /**
+     * 从 ServerConfig 的 "eureka.service.url" 配置项，获得 Eureka Server 地址
+     * 
+     * @return List<String>
+     * @date: 2020年4月26日 下午5:31:54
+     */
     public List<String> eurekaServiceUrls() {
         String configuration = getValue("eureka.service.url", "");
         if (Strings.isNullOrEmpty(configuration)) {
