@@ -1,5 +1,20 @@
 package com.ctrip.framework.apollo.configservice.service;
 
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.InitializingBean;
+import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
+
 import com.ctrip.framework.apollo.biz.config.BizConfig;
 import com.ctrip.framework.apollo.biz.entity.ReleaseMessage;
 import com.ctrip.framework.apollo.biz.message.ReleaseMessageListener;
@@ -11,20 +26,6 @@ import com.ctrip.framework.apollo.tracer.spi.Transaction;
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.InitializingBean;
-import org.springframework.stereotype.Service;
-import org.springframework.util.CollectionUtils;
-
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * 缓存 ReleaseMessage 的 Service 实现类。通过将 ReleaseMessage 缓存在内存中，提高查询性能。<br>
@@ -127,7 +128,7 @@ public class ReleaseMessageServiceWithCache implements ReleaseMessageListener, I
 		return releaseMessages;
 	}
 
-	// 监听器处理消息
+    // 监听器处理消息, 关闭定时拉取
 	@Override
 	public void handleMessage(ReleaseMessage message, String channel) {
 		// Could stop once the ReleaseMessageScanner starts to work
@@ -147,6 +148,7 @@ public class ReleaseMessageServiceWithCache implements ReleaseMessageListener, I
 		long gap = message.getId() - maxIdScanned;
 		// 若无空缺 gap ，直接合并
 		if (gap == 1) {
+            // 直接合并当前发布的消息
 			mergeReleaseMessage(message);
 		} else if (gap > 1) {
 			// gap found!
@@ -156,13 +158,13 @@ public class ReleaseMessageServiceWithCache implements ReleaseMessageListener, I
 		}
 	}
 
-	// Spring 调用，初始化定时任务
+    // Spring 调用，初始化定时任务
 	@Override
 	public void afterPropertiesSet() throws Exception {
 		// 从 ServerConfig 中，读取任务的周期配置
 		populateDataBaseInterval();
 
-		// 初始拉取 ReleaseMessage 到缓存
+        // 初始, 第一次拉取 ReleaseMessage 到缓存
 		// block the startup process until load finished
 		// this should happen before ReleaseMessageScanner due to autowire
 		loadReleaseMessages(0);
@@ -198,10 +200,10 @@ public class ReleaseMessageServiceWithCache implements ReleaseMessageListener, I
 	}
 
 	/**
-	 * 合并到 ReleaseMessage 缓存(合并操作时, 会更新maxIdScanned)
-	 * 
-	 * @param releaseMessage
-	 */
+     * 合并到 ReleaseMessage 缓存(合并操作时, 会更新最新数据(根据id大小, 大的为新数据))
+     * 
+     * @param releaseMessage
+     */
 	private synchronized void mergeReleaseMessage(ReleaseMessage releaseMessage) {
 		// 获得对应的 ReleaseMessage 对象
 		ReleaseMessage old = releaseMessageCache.get(releaseMessage.getMessage());
@@ -214,10 +216,10 @@ public class ReleaseMessageServiceWithCache implements ReleaseMessageListener, I
 	}
 
 	/**
-	 * 拉取ReleaseMessage到缓存
-	 * 
-	 * @param startId
-	 */
+     * 拉取ReleaseMessage到缓存(每次批量处理500条记录)
+     * 
+     * @param startId
+     */
 	private void loadReleaseMessages(long startId) {
 		boolean hasMore = true;
 		while (hasMore && !Thread.currentThread().isInterrupted()) {
@@ -242,8 +244,8 @@ public class ReleaseMessageServiceWithCache implements ReleaseMessageListener, I
 	}
 
 	/**
-	 * 从 ServerConfig 中，读取任务的周期配置
-	 */
+     * 从 ServerConfig 中，读取任务的周期配置信息
+     */
 	private void populateDataBaseInterval() {
 		scanInterval = bizConfig.releaseMessageCacheScanInterval();
 		scanIntervalTimeUnit = bizConfig.releaseMessageCacheScanIntervalTimeUnit();

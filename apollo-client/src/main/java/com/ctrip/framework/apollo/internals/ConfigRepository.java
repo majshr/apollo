@@ -28,7 +28,7 @@ public interface ConfigRepository {
     public void setUpstreamRepository(ConfigRepository upstreamConfigRepository);
 
     /**
-     * 监听 Repository 的配置的变化。<br>
+     * 监听 Repository 的配置的变化, 添加监听器。<br>
      * Add change listener.
      * 
      * @param listener

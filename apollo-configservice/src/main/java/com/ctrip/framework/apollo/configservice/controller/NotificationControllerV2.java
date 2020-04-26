@@ -1,5 +1,27 @@
 package com.ctrip.framework.apollo.configservice.controller;
 
+import java.lang.reflect.Type;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.util.CollectionUtils;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.context.request.async.DeferredResult;
+
 import com.ctrip.framework.apollo.biz.config.BizConfig;
 import com.ctrip.framework.apollo.biz.entity.ReleaseMessage;
 import com.ctrip.framework.apollo.biz.message.ReleaseMessageListener;
@@ -16,7 +38,6 @@ import com.ctrip.framework.apollo.core.utils.ApolloThreadFactory;
 import com.ctrip.framework.apollo.tracer.Tracer;
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
-import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
@@ -26,27 +47,6 @@ import com.google.common.collect.Sets;
 import com.google.common.collect.TreeMultimap;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
-import org.springframework.util.CollectionUtils;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.context.request.async.DeferredResult;
-
-import java.lang.reflect.Type;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
 
 /**
  * @author Jason Song(song_s@ctrip.com)
@@ -225,7 +225,7 @@ public class NotificationControllerV2 implements ReleaseMessageListener {
 		// 实际上，下面的过程，我们已经不需要 db 连接，因此进行关闭。
 		entityManagerUtil.closeEntityManager();
 
-		// 获得新的 ApolloConfigNotification 通知数组
+        // 获得 ApolloConfigNotification 通知数组
 		List<ApolloConfigNotification> newNotifications = getApolloConfigNotifications(namespaces,
 				clientSideNotifications, watchedKeysMap, latestReleaseMessages);
 
@@ -287,13 +287,18 @@ public class NotificationControllerV2 implements ReleaseMessageListener {
 	}
 
 	/**
-	 * 获得新的 ApolloConfigNotification 通知数组
-	 * @param namespaces
-	 * @param clientSideNotifications 客户端通知编号
-	 * @param watchedKeysMap {namespace: watchKey}map
-	 * @param latestReleaseMessages 最新的ReleaseMessage集合
-	 * @return
-	 */
+     * 获得新的 ApolloConfigNotification 通知数组
+     * 
+     * @param namespaces
+     *            等待通知的namespace数组
+     * @param clientSideNotifications
+     *            客户端通知编号
+     * @param watchedKeysMap
+     *            {namespace: watchKey}map
+     * @param latestReleaseMessages
+     *            最新的ReleaseMessage集合
+     * @return
+     */
 	private List<ApolloConfigNotification> getApolloConfigNotifications(Set<String> namespaces,
 			Map<String, Long> clientSideNotifications, Multimap<String, String> watchedKeysMap,
 			List<ReleaseMessage> latestReleaseMessages) {
@@ -303,6 +308,7 @@ public class NotificationControllerV2 implements ReleaseMessageListener {
 		if (!CollectionUtils.isEmpty(latestReleaseMessages)) {
 			// 创建最新通知的 Map 。其中 Key 为 Watch Key; value为ReleaseMessage.id 。
 			Map<String, Long> latestNotifications = Maps.newHashMap();
+            // 最新ReleaseMessage消息map
 			for (ReleaseMessage releaseMessage : latestReleaseMessages) {
 				latestNotifications.put(releaseMessage.getMessage(), releaseMessage.getId());
 			}
@@ -311,7 +317,7 @@ public class NotificationControllerV2 implements ReleaseMessageListener {
 			for (String namespace : namespaces) {
 				// 客户端编号
 				long clientSideId = clientSideNotifications.get(namespace);
-				// 记录当前最大通知编号
+                // 记录当前最新通知编号
 				long latestId = ConfigConsts.NOTIFICATION_ID_PLACEHOLDER;
 				// 获得 Namespace 对应的 Watch Key 集合
 				Collection<String> namespaceWatchedKeys = watchedKeysMap.get(namespace);

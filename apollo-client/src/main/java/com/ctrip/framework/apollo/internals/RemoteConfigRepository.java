@@ -1,5 +1,18 @@
 package com.ctrip.framework.apollo.internals;
 
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.ctrip.framework.apollo.Apollo;
 import com.ctrip.framework.apollo.build.ApolloInjector;
 import com.ctrip.framework.apollo.core.ConfigConsts;
@@ -29,17 +42,6 @@ import com.google.common.escape.Escaper;
 import com.google.common.net.UrlEscapers;
 import com.google.common.util.concurrent.RateLimiter;
 import com.google.gson.Gson;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * 实现 AbstractConfigRepository 抽象类，远程配置 Repository 。<br>
@@ -52,6 +54,7 @@ public class RemoteConfigRepository extends AbstractConfigRepository {
 	private static final Logger logger = LoggerFactory.getLogger(RemoteConfigRepository.class);
 	private static final Joiner STRING_JOINER = Joiner.on(ConfigConsts.CLUSTER_NAMESPACE_SEPARATOR);
 	private static final Joiner.MapJoiner MAP_JOINER = Joiner.on("&").withKeyValueSeparator("=");
+
 	private static final Escaper pathEscaper = UrlEscapers.urlPathSegmentEscaper();
 	private static final Escaper queryParamEscaper = UrlEscapers.urlFormParameterEscaper();
 
@@ -86,8 +89,8 @@ public class RemoteConfigRepository extends AbstractConfigRepository {
 	private final SchedulePolicy m_loadConfigFailSchedulePolicy;
 	
 	/**
-	 * 加载配置的 RateLimiter(限流器)
-	 */
+     * 加载配置的 RateLimiter(限流器, qps配置设置的)
+     */
 	private final RateLimiter m_loadConfigRateLimiter;
 
 	// ***********************通知属性*************************8
@@ -102,11 +105,11 @@ public class RemoteConfigRepository extends AbstractConfigRepository {
 	private final RemoteConfigLongPollService remoteConfigLongPollService;
 	
 	/**
-	 * 是否强制拉取缓存的标记
-	 *
-	 * 若为 true ，则多一轮从 Config Service 拉取配置
-	 * 为 true 的原因，RemoteConfigRepository 知道 Config Service 有配置刷新
-	 */
+     * 是否强制拉取缓存的标记<br>
+     *
+     * 若为 true ，则多一轮从 Config Service 拉取配置<br>
+     * 为 true 的原因，RemoteConfigRepository 知道 Config Service 有配置刷新<br>
+     */
 	private final AtomicBoolean m_configNeedForceRefresh;
 	
 	// ========================================================
@@ -149,9 +152,12 @@ public class RemoteConfigRepository extends AbstractConfigRepository {
 
 	@Override
 	public Properties getConfig() {
+        // 如果缓存为空，强制从 Config Service 拉取配置
 		if (m_configCache.get() == null) {
+            // 强制从 Config Service 拉取配置。
 			this.sync();
 		}
+        // 转换成 Properties 对象，并返回
 		return transformApolloConfigToProperties(m_configCache.get());
 	}
 
@@ -172,7 +178,7 @@ public class RemoteConfigRepository extends AbstractConfigRepository {
 		logger.debug("Schedule periodic refresh with interval: {} {}", m_configUtil.getRefreshInterval(),
 				m_configUtil.getRefreshIntervalTimeUnit());
 		
-		// 创建定时任务，定时刷新配置
+        // 创建定时任务，定时刷新配置(每隔5分钟, 调用trySync同步配置)
 		m_executorService.scheduleAtFixedRate(new Runnable() {
 			@Override
 			public void run() {
@@ -249,7 +255,7 @@ public class RemoteConfigRepository extends AbstractConfigRepository {
 		String dataCenter = m_configUtil.getDataCenter();
 		String secret = m_configUtil.getAccessKeySecret();
 		Tracer.logEvent("Apollo.Client.ConfigMeta", STRING_JOINER.join(appId, cluster, m_namespace));
-		// 计算重试次数
+        // 计算重试次数, 若 m_configNeedForceRefresh 为 true ，代表强制刷新配置，会多重试一次。
 		int maxRetries = m_configNeedForceRefresh.get() ? 2 : 1;
 		long onErrorSleepTime = 0; // 0 means no sleep
 		Throwable exception = null;
@@ -268,7 +274,7 @@ public class RemoteConfigRepository extends AbstractConfigRepository {
 				randomConfigServices.add(0, m_longPollServiceDto.getAndSet(null));
 			}
 
-			// 循环所有的 Config Service 的地址
+            // 循环所有的 Config Service 的地址, 读取配置重试次数直到成功。
 			for (ServiceDTO configService : randomConfigServices) {
 				// sleep 等待，下次从 Config Service 拉取配置
 				if (onErrorSleepTime > 0) {
@@ -421,10 +427,12 @@ public class RemoteConfigRepository extends AbstractConfigRepository {
 	}
 
 	/**
-	 * 长轮询到RemoteConfigRepository 的 Namespace 下的配置更新时, 会回调此方法; 同步配置
-	 * @param longPollNotifiedServiceDto
-	 * @param remoteMessages
-	 */
+     * RemoteConfigLongPollService 长轮询到RemoteConfigRepository 的 Namespace
+     * 下的配置更新时, 会回调此方法; 同步配置
+     * 
+     * @param longPollNotifiedServiceDto
+     * @param remoteMessages
+     */
 	public void onLongPollNotified(ServiceDTO longPollNotifiedServiceDto, ApolloNotificationMessages remoteMessages) {
 		// 设置长轮询到配置更新的 Config Service 。下次同步配置时，优先读取该服务
 		m_longPollServiceDto.set(longPollNotifiedServiceDto);
@@ -443,9 +451,10 @@ public class RemoteConfigRepository extends AbstractConfigRepository {
 	}
 
 	/**
-	 * 获得所有 Config Service 信息
-	 * @return
-	 */
+     * 获得所有 Config Service 信息(Config Service集群地址们)
+     * 
+     * @return
+     */
 	private List<ServiceDTO> getConfigServices() {
 		List<ServiceDTO> services = m_serviceLocator.getConfigServices();
 		if (services.size() == 0) {

@@ -1,5 +1,19 @@
 package com.ctrip.framework.apollo.configservice.service;
 
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.InitializingBean;
+import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
+
 import com.ctrip.framework.apollo.biz.config.BizConfig;
 import com.ctrip.framework.apollo.biz.repository.AppNamespaceRepository;
 import com.ctrip.framework.apollo.common.entity.AppNamespace;
@@ -15,19 +29,6 @@ import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.InitializingBean;
-import org.springframework.stereotype.Service;
-import org.springframework.util.CollectionUtils;
-
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 
 /**
  * 缓存 AppNamespace 的 Service 实现类。通过将 AppNamespace 缓存在内存中，提高查询性能。<br>
@@ -41,6 +42,9 @@ import java.util.concurrent.TimeUnit;
 @Service
 public class AppNamespaceServiceWithCache implements InitializingBean {
 	private static final Logger logger = LoggerFactory.getLogger(AppNamespaceServiceWithCache.class);
+    /**
+     * "+" 连接符
+     */
 	private static final Joiner STRING_JOINER = Joiner.on(ConfigConsts.CLUSTER_NAMESPACE_SEPARATOR).skipNulls();
 	private final AppNamespaceRepository appNamespaceRepository;
 	
@@ -75,24 +79,24 @@ public class AppNamespaceServiceWithCache implements InitializingBean {
 	private long maxIdScanned;
 
 	/**
-	 * 公用类型的 AppNamespace 的缓存
-	 *
-	 * //store namespaceName -> AppNamespace
-	 */
+     * 公用类型的 AppNamespace 的缓存<br>
+     *
+     * store namespaceName -> AppNamespace
+     */
 	private CaseInsensitiveMapWrapper<AppNamespace> publicAppNamespaceCache;
 
 	/**
-	 * App 下的 AppNamespace 的缓存
-	 *
-	 * store appId+namespaceName -> AppNamespace
-	 */
+     * App 下的 AppNamespace 的缓存<br>
+     *
+     * store appId+namespaceName -> AppNamespace
+     */
 	private CaseInsensitiveMapWrapper<AppNamespace> appNamespaceCache;
 
 	/**
-	 * AppNamespace 的缓存
-	 *
-	 * //store id -> AppNamespace
-	 */
+     * AppNamespace 的缓存<br>
+     *
+     * store id -> AppNamespace
+     */
 	private Map<Long, AppNamespace> appNamespaceIdCache;
 
 	public AppNamespaceServiceWithCache(final AppNamespaceRepository appNamespaceRepository,
@@ -102,6 +106,11 @@ public class AppNamespaceServiceWithCache implements InitializingBean {
 		initialize();
 	}
 
+    /**
+     * 初始化, 构造方法中调用
+     * 
+     * @date: 2020年4月26日 下午3:06:10
+     */
 	private void initialize() {
 		maxIdScanned = 0;
 		// 创建缓存对象
@@ -189,7 +198,8 @@ public class AppNamespaceServiceWithCache implements InitializingBean {
 		populateDataBaseInterval();
 		
 		// 全量初始化 AppNamespace 缓存
-		scanNewAppNamespaces(); // block the startup process until load finished
+        // block the startup process until load finished
+        scanNewAppNamespaces();
 		
 		// 创建定时任务，全量重构 AppNamespace 缓存
 		scheduledExecutorService.scheduleAtFixedRate(() -> {
@@ -234,7 +244,6 @@ public class AppNamespaceServiceWithCache implements InitializingBean {
 	}
 
 	
-	// for those new app namespaces
 	/**
 	 * 加载新的 AppNamespace 们
 	 */
@@ -386,6 +395,13 @@ public class AppNamespaceServiceWithCache implements InitializingBean {
 		}
 	}
 
+    /**
+     * "+" 拼接appNamespace.getAppId()和appNamespace.getName()
+     * 
+     * @param appNamespace
+     * @return String
+     * @date: 2020年4月26日 下午3:08:29
+     */
 	private String assembleAppNamespaceKey(AppNamespace appNamespace) {
 		return STRING_JOINER.join(appNamespace.getAppId(), appNamespace.getName());
 	}

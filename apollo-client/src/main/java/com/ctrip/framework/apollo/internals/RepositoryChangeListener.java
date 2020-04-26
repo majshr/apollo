@@ -3,13 +3,18 @@ package com.ctrip.framework.apollo.internals;
 import java.util.Properties;
 
 /**
+ * 监听Repository配置变化
+ * 
  * @author Jason Song(song_s@ctrip.com)
  */
 public interface RepositoryChangeListener {
-  /**
-   * Invoked when config repository changes.
-   * @param namespace the namespace of this repository change
-   * @param newProperties the properties after change
-   */
-  public void onRepositoryChange(String namespace, Properties newProperties);
+    /**
+     * Invoked when config repository changes.
+     * 
+     * @param namespace
+     *            the namespace of this repository change
+     * @param newProperties
+     *            the properties after change
+     */
+    public void onRepositoryChange(String namespace, Properties newProperties);
 }
