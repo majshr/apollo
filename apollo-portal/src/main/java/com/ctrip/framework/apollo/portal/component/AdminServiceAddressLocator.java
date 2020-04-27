@@ -27,7 +27,10 @@ import com.ctrip.framework.apollo.tracer.Tracer;
 import com.google.common.collect.Lists;
 
 /**
- * admin service服务地址加载器
+ * admin service服务地址加载器<br>
+ * 初始时，创建延迟 1 秒的任务，从 Meta Service 获取 Config Service 集群地址进行缓存。<br>
+ * 获取成功时，创建延迟 5 分钟的任务，从 Meta Service 获取 Config Service 集群地址刷新缓存。<br>
+ * 获取失败时，创建延迟 10 秒的任务，从 Meta Service 获取 Config Service 集群地址刷新缓存。<br>
  * 
  * @author mengaijun
  * @Description: TODO

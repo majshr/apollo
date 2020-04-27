@@ -4,42 +4,49 @@ import com.ctrip.framework.foundation.internals.NetworkInterfaceManager;
 import com.ctrip.framework.foundation.spi.provider.NetworkProvider;
 import com.ctrip.framework.foundation.spi.provider.Provider;
 
+/**
+ * 
+ * @author mengaijun
+ * @Description: TODO
+ * @date: 2020年4月27日 上午10:16:32
+ */
 public class DefaultNetworkProvider implements NetworkProvider {
-  @Override
-  public String getProperty(String name, String defaultValue) {
-    if ("host.address".equalsIgnoreCase(name)) {
-      String val = getHostAddress();
-      return val == null ? defaultValue : val;
+
+    @Override
+    public String getProperty(String name, String defaultValue) {
+        if ("host.address".equalsIgnoreCase(name)) {
+            String val = getHostAddress();
+            return val == null ? defaultValue : val;
+        }
+        if ("host.name".equalsIgnoreCase(name)) {
+            String val = getHostName();
+            return val == null ? defaultValue : val;
+        }
+        return defaultValue;
     }
-    if ("host.name".equalsIgnoreCase(name)) {
-      String val = getHostName();
-      return val == null ? defaultValue : val;
+
+    @Override
+    public void initialize() {
+
     }
-    return defaultValue;
-  }
 
-  @Override
-  public void initialize() {
+    @Override
+    public String getHostAddress() {
+        return NetworkInterfaceManager.INSTANCE.getLocalHostAddress();
+    }
 
-  }
+    @Override
+    public String getHostName() {
+        return NetworkInterfaceManager.INSTANCE.getLocalHostName();
+    }
 
-  @Override
-  public String getHostAddress() {
-    return NetworkInterfaceManager.INSTANCE.getLocalHostAddress();
-  }
+    @Override
+    public Class<? extends Provider> getType() {
+        return NetworkProvider.class;
+    }
 
-  @Override
-  public String getHostName() {
-    return NetworkInterfaceManager.INSTANCE.getLocalHostName();
-  }
-
-  @Override
-  public Class<? extends Provider> getType() {
-    return NetworkProvider.class;
-  }
-
-  @Override
-  public String toString() {
-    return "hostName [" + getHostName() + "] hostIP [" + getHostAddress() + "] (DefaultNetworkProvider)";
-  }
+    @Override
+    public String toString() {
+        return "hostName [" + getHostName() + "] hostIP [" + getHostAddress() + "] (DefaultNetworkProvider)";
+    }
 }

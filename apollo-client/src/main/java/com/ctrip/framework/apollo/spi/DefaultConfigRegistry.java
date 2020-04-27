@@ -8,25 +8,31 @@ import org.slf4j.LoggerFactory;
 import com.google.common.collect.Maps;
 
 /**
+ * Config注册器
+ * 
  * @author Jason Song(song_s@ctrip.com)
  */
 public class DefaultConfigRegistry implements ConfigRegistry {
-  private static final Logger s_logger = LoggerFactory.getLogger(DefaultConfigRegistry.class);
-  private Map<String, ConfigFactory> m_instances = Maps.newConcurrentMap();
+    private static final Logger s_logger = LoggerFactory.getLogger(DefaultConfigRegistry.class);
 
-  @Override
-  public void register(String namespace, ConfigFactory factory) {
-    if (m_instances.containsKey(namespace)) {
-      s_logger.warn("ConfigFactory({}) is overridden by {}!", namespace, factory.getClass());
+    /**
+     * namespace-ConfigFactory缓存
+     */
+    private Map<String, ConfigFactory> m_instances = Maps.newConcurrentMap();
+
+    @Override
+    public void register(String namespace, ConfigFactory factory) {
+        if (m_instances.containsKey(namespace)) {
+            s_logger.warn("ConfigFactory({}) is overridden by {}!", namespace, factory.getClass());
+        }
+
+        m_instances.put(namespace, factory);
     }
 
-    m_instances.put(namespace, factory);
-  }
+    @Override
+    public ConfigFactory getFactory(String namespace) {
+        ConfigFactory config = m_instances.get(namespace);
 
-  @Override
-  public ConfigFactory getFactory(String namespace) {
-    ConfigFactory config = m_instances.get(namespace);
-
-    return config;
-  }
+        return config;
+    }
 }

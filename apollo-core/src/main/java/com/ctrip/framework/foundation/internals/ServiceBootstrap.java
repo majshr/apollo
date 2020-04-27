@@ -10,7 +10,7 @@ import com.ctrip.framework.apollo.core.spi.Ordered;
 import com.google.common.collect.Lists;
 
 /**
- * 启动加载服务
+ * 启动加载服务(spi加载)
  * 
  * @author mengaijun
  * @Description: TODO

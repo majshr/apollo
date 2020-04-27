@@ -41,12 +41,16 @@ public class DefaultConfigFactory implements ConfigFactory {
         if (ConfigFileFormat.isPropertiesCompatible(format)) {
             return new DefaultConfig(namespace, createPropertiesCompatibleFileConfigRepository(namespace, format));
         }
+        // 创建 ConfigRepository 对象
+        // 创建 DefaultConfig 对象
         return new DefaultConfig(namespace, createLocalConfigRepository(namespace));
     }
 
     @Override
     public ConfigFile createConfigFile(String namespace, ConfigFileFormat configFileFormat) {
+        // 创建 ConfigRepository 对象
         ConfigRepository configRepository = createLocalConfigRepository(namespace);
+        // 创建对应的 ConfigFile 对象
         switch (configFileFormat) {
         case Properties:
             return new PropertiesConfigFile(namespace, configRepository);
@@ -65,12 +69,22 @@ public class DefaultConfigFactory implements ConfigFactory {
         return null;
     }
 
+    /**
+     * 创建 LocalConfigRepository 对象
+     * 
+     * @param namespace
+     * @return LocalFileConfigRepository
+     * @date: 2020年4月27日 下午5:01:06
+     */
     LocalFileConfigRepository createLocalConfigRepository(String namespace) {
+        // 本地模式，使用 LocalFileConfigRepository 对象
         if (m_configUtil.isInLocalMode()) {
             logger.warn("==== Apollo is in local mode! Won't pull configs from remote server for namespace {} ! ====",
                     namespace);
             return new LocalFileConfigRepository(namespace);
         }
+
+        // 非本地模式，使用 LocalFileConfigRepository + RemoteConfigRepository 对象
         return new LocalFileConfigRepository(namespace, createRemoteConfigRepository(namespace));
     }
 
