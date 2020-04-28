@@ -13,56 +13,61 @@ import com.ctrip.framework.apollo.tracer.Tracer;
 import com.ctrip.framework.apollo.util.ExceptionUtil;
 
 /**
+ * 实现 AbstractConfigFile 抽象类，类型为 .properties 的 ConfigFile 实现类。
+ * 
  * @author Jason Song(song_s@ctrip.com)
  */
 public class PropertiesConfigFile extends AbstractConfigFile {
-  protected AtomicReference<String> m_contentCache;
+	
+	/**
+	 * 配置字符串缓存<br>
+	 * 因为 Properties 是 KV 数据结构，需要将多条 KV 拼接成一个字符串，进行缓存到 m_contentCache 中。
+	 */
+	protected AtomicReference<String> m_contentCache;
 
-  public PropertiesConfigFile(String namespace,
-                              ConfigRepository configRepository) {
-    super(namespace, configRepository);
-    m_contentCache = new AtomicReference<>();
-  }
+	public PropertiesConfigFile(String namespace, ConfigRepository configRepository) {
+		super(namespace, configRepository);
+		m_contentCache = new AtomicReference<>();
+	}
 
-  @Override
-  protected void update(Properties newProperties) {
-    m_configProperties.set(newProperties);
-    m_contentCache.set(null);
-  }
+	@Override
+	protected void update(Properties newProperties) {
+		m_configProperties.set(newProperties);
+		m_contentCache.set(null);
+	}
 
-  @Override
-  public String getContent() {
-    if (m_contentCache.get() == null) {
-      m_contentCache.set(doGetContent());
-    }
-    return m_contentCache.get();
-  }
+	@Override
+	public String getContent() {
+		if (m_contentCache.get() == null) {
+			m_contentCache.set(doGetContent());
+		}
+		return m_contentCache.get();
+	}
 
-  String doGetContent() {
-    if (!this.hasContent()) {
-      return null;
-    }
+	String doGetContent() {
+		if (!this.hasContent()) {
+			return null;
+		}
 
-    try {
-      return PropertiesUtil.toString(m_configProperties.get());
-    } catch (Throwable ex) {
-      ApolloConfigException exception =
-          new ApolloConfigException(String
-              .format("Parse properties file content failed for namespace: %s, cause: %s",
-                  m_namespace, ExceptionUtil.getDetailMessage(ex)));
-      Tracer.logError(exception);
-      throw exception;
-    }
-  }
+		try {
+			return PropertiesUtil.toString(m_configProperties.get());
+		} catch (Throwable ex) {
+			ApolloConfigException exception = new ApolloConfigException(
+					String.format("Parse properties file content failed for namespace: %s, cause: %s", m_namespace,
+							ExceptionUtil.getDetailMessage(ex)));
+			Tracer.logError(exception);
+			throw exception;
+		}
+	}
 
-  @Override
-  public boolean hasContent() {
-    return m_configProperties.get() != null && !m_configProperties.get().isEmpty();
-  }
+	@Override
+	public boolean hasContent() {
+		return m_configProperties.get() != null && !m_configProperties.get().isEmpty();
+	}
 
-  @Override
-  public ConfigFileFormat getConfigFileFormat() {
-    return ConfigFileFormat.Properties;
-  }
+	@Override
+	public ConfigFileFormat getConfigFileFormat() {
+		return ConfigFileFormat.Properties;
+	}
 
 }

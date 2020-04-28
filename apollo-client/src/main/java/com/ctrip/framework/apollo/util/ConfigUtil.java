@@ -309,6 +309,11 @@ public class ConfigUtil {
         return longPollingInitialDelayInMills;
     }
 
+    /**
+     * 初始化自动更新功能字段<br>
+     * 默认开启，可通过 -Dapollo.autoUpdateInjectedSpringProperties=false 
+     * 或者在 app.properties 中设置 apollo.autoUpdateInjectedSpringProperties=false 进行关闭。
+     */
     private void initAutoUpdateInjectedSpringProperties() {
         // 1. Get from System Property
         String enableAutoUpdate = System.getProperty("apollo.autoUpdateInjectedSpringProperties");

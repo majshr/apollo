@@ -5,8 +5,8 @@ import java.util.Properties;
 import com.ctrip.framework.apollo.enums.ConfigSourceType;
 
 /**
- * 作为 Client 的 Repository ( 类似 DAO ) ，读取配置。
- * 
+ * 作为 Client 的 Repository ( 类似 DAO ) ，读取配置。<br>
+ * 负责从远程的 Config Service 读取配置。
  * @author Jason Song(song_s@ctrip.com)
  */
 public interface ConfigRepository {

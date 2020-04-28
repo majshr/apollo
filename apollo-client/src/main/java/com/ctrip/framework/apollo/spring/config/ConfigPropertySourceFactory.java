@@ -5,19 +5,35 @@ import java.util.List;
 import com.ctrip.framework.apollo.Config;
 import com.google.common.collect.Lists;
 
+/**
+ * ConfigPropertySource工厂类
+ * @author maj
+ *
+ */
 public class ConfigPropertySourceFactory {
 
-  private final List<ConfigPropertySource> configPropertySources = Lists.newLinkedList();
+	/**
+     * ConfigPropertySource 数组
+     */
+	private final List<ConfigPropertySource> configPropertySources = Lists.newLinkedList();
 
-  public ConfigPropertySource getConfigPropertySource(String name, Config source) {
-    ConfigPropertySource configPropertySource = new ConfigPropertySource(name, source);
+	/**
+	 *  创建 ConfigPropertySource 对象
+	 * @param name
+	 * @param source
+	 * @return
+	 */
+	public ConfigPropertySource getConfigPropertySource(String name, Config source) {
+		// 创建 ConfigPropertySource 对象
+		ConfigPropertySource configPropertySource = new ConfigPropertySource(name, source);
 
-    configPropertySources.add(configPropertySource);
+		// 添加到数组
+		configPropertySources.add(configPropertySource);
 
-    return configPropertySource;
-  }
+		return configPropertySource;
+	}
 
-  public List<ConfigPropertySource> getAllConfigPropertySources() {
-    return Lists.newLinkedList(configPropertySources);
-  }
+	public List<ConfigPropertySource> getAllConfigPropertySources() {
+		return Lists.newLinkedList(configPropertySources);
+	}
 }

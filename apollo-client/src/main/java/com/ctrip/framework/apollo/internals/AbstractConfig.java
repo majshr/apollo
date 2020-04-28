@@ -106,6 +106,7 @@ public abstract class AbstractConfig implements Config {
         addChangeListener(listener, interestedKeys, null);
     }
 
+    // 添加配置变更监听器
     @Override
     public void addChangeListener(ConfigChangeListener listener, Set<String> interestedKeys,
             Set<String> interestedKeyPrefixes) {
@@ -429,14 +430,18 @@ public abstract class AbstractConfig implements Config {
      */
     private <T> T getValueAndStoreToCache(String key, Function<String, T> parser, Cache<String, T> cache,
             T defaultValue) {
+    	// 获得当前版本号
         long currentConfigVersion = m_configVersion.get();
+        // 获得属性值
         String value = getProperty(key, null);
 
         if (value != null) {
+        	// 解析属性值
             T result = parser.apply(value);
             // 查到值的话, 加到缓存
             if (result != null) {
                 synchronized (this) {
+                	// 若版本号未变化，则更新到缓存，从而解决并发的问题。
                     if (m_configVersion.get() == currentConfigVersion) {
                         cache.put(key, result);
                     }
@@ -480,18 +485,25 @@ public abstract class AbstractConfig implements Config {
         }
     }
 
+    /**
+     * 触发配置变更监听器们
+     * @param changeEvent
+     */
     protected void fireConfigChange(final ConfigChangeEvent changeEvent) {
+    	// 缓存 ConfigChangeListener 数组
         for (final ConfigChangeListener listener : m_listeners) {
             // check whether the listener is interested in this change event
             if (!isConfigChangeListenerInterested(listener, changeEvent)) {
                 continue;
             }
+            // 提交到线程池中，异步并发通知监听器们，从而避免有些监听器执行时间过长。
             m_executorService.submit(new Runnable() {
                 @Override
                 public void run() {
                     String listenerName = listener.getClass().getName();
                     Transaction transaction = Tracer.newTransaction("Apollo.ConfigChangeListener", listenerName);
                     try {
+                    	// 通知监听器
                         listener.onChange(changeEvent);
                         transaction.setStatus(Transaction.SUCCESS);
                     } catch (Throwable ex) {
@@ -537,6 +549,13 @@ public abstract class AbstractConfig implements Config {
         return false;
     }
 
+    /**
+     * 计算变更信息的集合
+     * @param namespace
+     * @param previous
+     * @param current
+     * @return
+     */
     List<ConfigChange> calcPropertyChanges(String namespace, Properties previous, Properties current) {
         if (previous == null) {
             previous = propertiesFactory.getPropertiesInstance();
@@ -555,16 +574,19 @@ public abstract class AbstractConfig implements Config {
 
         List<ConfigChange> changes = Lists.newArrayList();
 
+        // 计算新增的
         for (String newKey : newKeys) {
             changes.add(
                     new ConfigChange(namespace, newKey, null, current.getProperty(newKey), PropertyChangeType.ADDED));
         }
 
+        // 计算移除的
         for (String removedKey : removedKeys) {
             changes.add(new ConfigChange(namespace, removedKey, previous.getProperty(removedKey), null,
                     PropertyChangeType.DELETED));
         }
 
+        // 计算修改的
         for (String commonKey : commonKeys) {
             String previousValue = previous.getProperty(commonKey);
             String currentValue = current.getProperty(commonKey);
