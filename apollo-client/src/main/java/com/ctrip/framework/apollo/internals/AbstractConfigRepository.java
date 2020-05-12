@@ -24,6 +24,7 @@ public abstract class AbstractConfigRepository implements ConfigRepository {
 	 * RepositoryChangeListener 监听器 数组
 	 */
 	private List<RepositoryChangeListener> m_listeners = Lists.newCopyOnWriteArrayList();
+
 	protected PropertiesFactory propertiesFactory = ApolloInjector.getInstance(PropertiesFactory.class);
 
 	/**
@@ -33,6 +34,7 @@ public abstract class AbstractConfigRepository implements ConfigRepository {
      */
 	protected boolean trySync() {
 		try {
+            // 同步配置
 			sync();
 			// 返回同步成功
 			return true;
@@ -63,11 +65,13 @@ public abstract class AbstractConfigRepository implements ConfigRepository {
 	}
 
 	/**
-	 * 触发监听器们
-	 *
-	 * @param namespace Namespace 名字
-	 * @param newProperties 配置
-	 */
+     * 配置改变, 触发监听器们(就是调用监听器改变方法)
+     *
+     * @param namespace
+     *            Namespace 名字
+     * @param newProperties
+     *            配置
+     */
 	protected void fireRepositoryChange(String namespace, Properties newProperties) {
 		// 循环 RepositoryChangeListener 数组
 		for (RepositoryChangeListener listener : m_listeners) {

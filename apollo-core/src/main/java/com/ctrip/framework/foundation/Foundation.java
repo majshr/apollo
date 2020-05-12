@@ -11,7 +11,7 @@ import com.ctrip.framework.foundation.spi.provider.NetworkProvider;
 import com.ctrip.framework.foundation.spi.provider.ServerProvider;
 
 /**
- * 基础
+ * 基础属性类
  * 
  * @author mengaijun
  * @Description: TODO

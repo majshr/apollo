@@ -1,16 +1,10 @@
 package com.ctrip.framework.apollo.spring.property;
 
-import com.ctrip.framework.apollo.ConfigChangeListener;
-import com.ctrip.framework.apollo.enums.PropertyChangeType;
-import com.ctrip.framework.apollo.model.ConfigChange;
-import com.ctrip.framework.apollo.model.ConfigChangeEvent;
-import com.ctrip.framework.apollo.spring.util.SpringInjector;
-import com.google.gson.Gson;
 import java.lang.reflect.Field;
 import java.lang.reflect.Type;
 import java.util.Collection;
-import java.util.Objects;
 import java.util.Set;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.TypeConverter;
@@ -19,6 +13,11 @@ import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.core.env.Environment;
 import org.springframework.util.CollectionUtils;
 
+import com.ctrip.framework.apollo.ConfigChangeListener;
+import com.ctrip.framework.apollo.model.ConfigChangeEvent;
+import com.ctrip.framework.apollo.spring.util.SpringInjector;
+import com.google.gson.Gson;
+
 /**
  * 自动更新配置监听器
  * Create by zhangzheng on 2018/3/6
@@ -26,9 +25,16 @@ import org.springframework.util.CollectionUtils;
 public class AutoUpdateConfigChangeListener implements ConfigChangeListener {
 	private static final Logger logger = LoggerFactory.getLogger(AutoUpdateConfigChangeListener.class);
 
+    /**
+     * {@link TypeConverter#convertIfNecessary(Object, Class, Field)} 方法是否带上
+     * Field 参数，因为 Spring 3.2.0+ 才有该方法
+     */
 	private final boolean typeConverterHasConvertIfNecessaryWithFieldParameter;
 	private final Environment environment;
 	private final ConfigurableBeanFactory beanFactory;
+    /**
+     * 类型转换器
+     */
 	private final TypeConverter typeConverter;
 	private final PlaceholderHelper placeholderHelper;
 	private final SpringValueRegistry springValueRegistry;
@@ -51,8 +57,10 @@ public class AutoUpdateConfigChangeListener implements ConfigChangeListener {
 		if (CollectionUtils.isEmpty(keys)) {
 			return;
 		}
+
 		// 循环 KEY 集合，更新 StringValue
 		for (String key : keys) {
+            // 忽略，若不在 SpringValueRegistry 中(不是所有的 Apollo 的配置项，应用程序中都在使用。)
 			// 1. check whether the changed key is relevant
 			Collection<SpringValue> targetValues = springValueRegistry.get(beanFactory, key);
 			if (targetValues == null || targetValues.isEmpty()) {
@@ -66,9 +74,17 @@ public class AutoUpdateConfigChangeListener implements ConfigChangeListener {
 		}
 	}
 
+    /**
+     * 更新
+     * 
+     * @param springValue
+     * @date: 2020年5月7日 上午11:21:17
+     */
 	private void updateSpringValue(SpringValue springValue) {
 		try {
+            // 解析值
 			Object value = resolvePropertyValue(springValue);
+            // 更新 StringValue
 			springValue.update(value);
 
 			logger.info("Auto update apollo changed value successfully, new value: {}, {}", value, springValue);
@@ -89,9 +105,11 @@ public class AutoUpdateConfigChangeListener implements ConfigChangeListener {
 		Object value = placeholderHelper.resolvePropertyValue(beanFactory, springValue.getBeanName(),
 				springValue.getPlaceholder());
 
+        // 如果值数据结构是 JSON 类型，则使用 Gson 解析成对应值的类型
 		if (springValue.isJson()) {
 			value = parseJsonValue((String) value, springValue.getGenericType());
 		} else {
+            // 如果值类型为field
 			if (springValue.isField()) {
 				// org.springframework.beans.TypeConverter#convertIfNecessary(java.lang.Object,
 				// java.lang.Class, java.lang.reflect.Field) is available from Spring 3.2.0+
@@ -102,6 +120,7 @@ public class AutoUpdateConfigChangeListener implements ConfigChangeListener {
 					value = this.typeConverter.convertIfNecessary(value, springValue.getTargetType());
 				}
 			} else {
+                // 如果类型为method
 				value = this.typeConverter.convertIfNecessary(value, springValue.getTargetType(),
 						springValue.getMethodParameter());
 			}
@@ -119,6 +138,12 @@ public class AutoUpdateConfigChangeListener implements ConfigChangeListener {
 		}
 	}
 
+    /**
+     * 判断是否有convertIfNecessary方法
+     * 
+     * @return boolean
+     * @date: 2020年5月7日 上午11:05:23
+     */
 	private boolean testTypeConverterHasConvertIfNecessaryWithFieldParameter() {
 		try {
 			TypeConverter.class.getMethod("convertIfNecessary", Object.class, Class.class, Field.class);

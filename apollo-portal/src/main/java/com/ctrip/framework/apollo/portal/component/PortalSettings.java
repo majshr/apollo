@@ -25,7 +25,7 @@ import com.ctrip.framework.apollo.portal.environment.Env;
 import com.ctrip.framework.apollo.portal.environment.PortalMetaDomainService;
 
 /**
- * 检查env健康状态
+ * 检查env健康状态; 检查admin service是否正常
  * 
  * @author mengaijun
  * @Description: TODO
@@ -60,6 +60,8 @@ public class PortalSettings {
     }
 
     // admin service健康检查
+    // PostConstruct在构造函数之后执行，init（）方法之前执行
+    // Constructor(构造方法) -> @Autowired(依赖注入) -> @PostConstruct(注释的方法)
     @PostConstruct
     private void postConstruct() {
         // 支持的环境
@@ -158,7 +160,7 @@ public class PortalSettings {
         }
 
         /**
-         * 是否启动状态
+         * env对应的admin service是否启动状态
          * 
          * @param env
          * @return boolean

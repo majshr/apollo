@@ -1,17 +1,16 @@
 package com.ctrip.framework.apollo.configservice.wrapper;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-
-import com.ctrip.framework.apollo.core.dto.ApolloConfigNotification;
+import java.util.List;
+import java.util.Map;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.lang.NonNull;
 import org.springframework.web.context.request.async.DeferredResult;
 
-import java.util.List;
-import java.util.Map;
+import com.ctrip.framework.apollo.core.dto.ApolloConfigNotification;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 
 /**
  * DeferredResult 包装器，封装 DeferredResult 的公用方法。
@@ -39,18 +38,23 @@ public class DeferredResultWrapper implements Comparable<DeferredResultWrapper> 
 	private DeferredResult<ResponseEntity<List<ApolloConfigNotification>>> result;
 
 	/**
-	 * 
-	 * @param timeoutInMilli DeferredResult超时时间
-	 */
+     * 构造方法
+     * 
+     * @param timeoutInMilli
+     *            DeferredResult超时时间
+     */
 	public DeferredResultWrapper(long timeoutInMilli) {
 		result = new DeferredResult<>(timeoutInMilli, NOT_MODIFIED_RESPONSE_LIST);
 	}
 
 	/**
-	 * 原始名字和归一化后名字做一个map映射
-	 * @param originalNamespaceName
-	 * @param normalizedNamespaceName
-	 */
+     * 归一化后名字 和 原始名字做一个map映射
+     * 
+     * @param originalNamespaceName
+     *            原始名字
+     * @param normalizedNamespaceName
+     *            归一化后名字
+     */
 	public void recordNamespaceNameNormalizedResult(String originalNamespaceName, String normalizedNamespaceName) {
 		if (normalizedNamespaceNameToOriginalNamespaceName == null) {
 			normalizedNamespaceNameToOriginalNamespaceName = Maps.newHashMap();

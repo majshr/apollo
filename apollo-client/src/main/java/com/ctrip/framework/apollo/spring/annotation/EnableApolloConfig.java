@@ -12,12 +12,17 @@ import org.springframework.core.Ordered;
 import com.ctrip.framework.apollo.core.ConfigConsts;
 
 /**
- * Use this annotation to register Apollo property sources when using Java Config.
+ * Use this annotation to register Apollo property sources when using Java
+ * Config.<br>
+ * 自定启动注解, Apollo XML 配置的 <apollo:config /> 等价
  *
- * <p>Configuration example:</p>
+ * <p>
+ * Configuration example:
+ * </p>
+ * 
  * <pre class="code">
  * &#064;Configuration
- * &#064;EnableApolloConfig({"someNamespace","anotherNamespace"})
+ * &#064;EnableApolloConfig({ "someNamespace", "anotherNamespace" })
  * public class AppConfig {
  *
  * }
@@ -30,15 +35,20 @@ import com.ctrip.framework.apollo.core.ConfigConsts;
 @Documented
 @Import(ApolloConfigRegistrar.class)
 public @interface EnableApolloConfig {
-  /**
-   * Apollo namespaces to inject configuration into Spring Property Sources.
-   */
-  String[] value() default {ConfigConsts.NAMESPACE_APPLICATION};
+    /**
+     * Apollo namespaces to inject configuration into Spring Property Sources.
+     * 
+     * @return Namespace 名字的集合
+     */
+    String[] value() default { ConfigConsts.NAMESPACE_APPLICATION };
 
-  /**
-   * The order of the apollo config, default is {@link Ordered#LOWEST_PRECEDENCE}, which is Integer.MAX_VALUE.
-   * If there are properties with the same name in different apollo configs, the apollo config with smaller order wins.
-   * @return
-   */
-  int order() default Ordered.LOWEST_PRECEDENCE;
+    /**
+     * The order of the apollo config, default is
+     * {@link Ordered#LOWEST_PRECEDENCE}, which is Integer.MAX_VALUE. If there
+     * are properties with the same name in different apollo configs, the apollo
+     * config with smaller order wins.
+     * 
+     * @return
+     */
+    int order() default Ordered.LOWEST_PRECEDENCE;
 }

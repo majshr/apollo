@@ -1,6 +1,8 @@
 package com.ctrip.framework.apollo.enums;
 
 /**
+ * 属性更改方式(add, modify, delete)
+ * 
  * @author Jason Song(song_s@ctrip.com)
  */
 public enum PropertyChangeType {

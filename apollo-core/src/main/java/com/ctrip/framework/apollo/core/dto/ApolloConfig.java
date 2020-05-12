@@ -3,6 +3,8 @@ package com.ctrip.framework.apollo.core.dto;
 import java.util.Map;
 
 /**
+ * namespace发布的的配置信息
+ * 
  * @author Jason Song(song_s@ctrip.com)
  */
 public class ApolloConfig {

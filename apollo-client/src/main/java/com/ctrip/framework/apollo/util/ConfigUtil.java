@@ -217,6 +217,13 @@ public class ConfigUtil {
         return onErrorRetryIntervalTimeUnit;
     }
 
+    /**
+     * 获取默认本地缓存目录<br>
+     * (没配置时默认: windows-> "C:\\opt\\data\\%s", linux -> "/opt/data/%s")
+     * 
+     * @return String
+     * @date: 2020年4月28日 下午4:42:51
+     */
     public String getDefaultLocalCacheDir() {
         String cacheRoot = getCustomizedCacheRoot();
 
@@ -224,6 +231,7 @@ public class ConfigUtil {
             return cacheRoot + File.separator + getAppId();
         }
 
+        // /opt/data/${appId}
         cacheRoot = isOSWindows() ? "C:\\opt\\data\\%s" : "/opt/data/%s";
         return String.format(cacheRoot, getAppId());
     }

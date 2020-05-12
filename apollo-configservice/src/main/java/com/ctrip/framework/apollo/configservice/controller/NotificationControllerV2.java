@@ -57,14 +57,14 @@ public class NotificationControllerV2 implements ReleaseMessageListener {
 	private static final Logger logger = LoggerFactory.getLogger(NotificationControllerV2.class);
 
 	/**
-	 * Watch Key 与 DeferredResultWrapper 的 Multimap; 维护所有请求<br>
-	 * key: 监听的key(ReleaseMessage.message) Value：DeferredResultWrapper(每个key对应多个等待通知的客户端) <br>
-	 * 目前 Apollo 的实现上，Watch Key 等价于 ReleaseMessage 的通知内容 message 字段<br>
-	 * 
-	 * 当请求的 Namespace 暂无新通知时，会将该 Namespace 对应的 Watch Key 们，注册到 deferredResults
-	 * 中。<br>
-	 * 等到 Namespace 配置发生变更时，在 #handleMessage(...) 中，进行通知。
-	 */
+     * Watch Key 与 DeferredResultWrapper 的 Multimap; 维护所有请求<br>
+     * key: 监听的key(ReleaseMessage.message)
+     * Value：DeferredResultWrapper(每个key对应多个等待通知的客户端) <br>
+     * 目前 Apollo 的实现上，Watch Key 等价于 ReleaseMessage 的通知内容 message 字段<br>
+     * 只要一个namespace对应的配置发生改变, 就需要通知监听的请求 当请求的 Namespace 暂无新通知时，会将该 Namespace
+     * 对应的 Watch Key 们，注册到 deferredResults 中。<br>
+     * 等到 Namespace 配置发生变更时，在 #handleMessage(...) 中，进行通知。
+     */
 	private final Multimap<String, DeferredResultWrapper> deferredResults = Multimaps
 			.synchronizedSetMultimap(TreeMultimap.create(String.CASE_INSENSITIVE_ORDER, Ordering.natural()));
 
@@ -125,7 +125,8 @@ public class NotificationControllerV2 implements ReleaseMessageListener {
 		// 解析 notificationsAsString 参数，创建 ApolloConfigNotification 数组。
 		List<ApolloConfigNotification> notifications = null;
 		try {
-			// 因为一个客户端可以订阅多个 Namespace ，所以该参数是 List 。
+            // 因为一个客户端可以订阅多个 Namespace ，所以该参数是 List 。
+            // 参数是{客户端需要使用的namespace-客户端最新更新编号}集合
 			/*
 			 * 接口真正返回的结果也是 List<ApolloConfigNotification> ，
 			 * 仅返回配置发生变化的 Namespace 对应的 ApolloConfigNotification 。
@@ -141,12 +142,12 @@ public class NotificationControllerV2 implements ReleaseMessageListener {
 			throw new BadRequestException("Invalid format of notifications: " + notificationsAsString);
 		}
 
-		// 创建 DeferredResultWrapper 对象(对应单个请求)
+        // 创建 DeferredResultWrapper 对象(对应单个请求, 请求可能监听多个namespace)
 		DeferredResultWrapper deferredResultWrapper = new DeferredResultWrapper(bizConfig.longPollingTimeoutInMilli());
 		
-		// Namespace 集合
+        // Namespace 集合(归一化后namespace)
 		Set<String> namespaces = Sets.newHashSet();
-		// 客户端的通知 Map 。key 为 Namespace 名，value 为通知编号。
+        // 客户端发布信息 Map 。key 为 Namespace 名，value 为通知编号。
 		Map<String, Long> clientSideNotifications = Maps.newHashMap();
 		// 过滤并创建 ApolloConfigNotification Map(名字归一化处理)
 		Map<String, ApolloConfigNotification> filteredNotifications = filterNotifications(appId, notifications);
@@ -225,7 +226,7 @@ public class NotificationControllerV2 implements ReleaseMessageListener {
 		// 实际上，下面的过程，我们已经不需要 db 连接，因此进行关闭。
 		entityManagerUtil.closeEntityManager();
 
-        // 获得 ApolloConfigNotification 通知数组
+        // 获得 ApolloConfigNotification 通知数组(发布信息比client现在存储的发布信息新)
 		List<ApolloConfigNotification> newNotifications = getApolloConfigNotifications(namespaces,
 				clientSideNotifications, watchedKeysMap, latestReleaseMessages);
 
@@ -239,15 +240,16 @@ public class NotificationControllerV2 implements ReleaseMessageListener {
 	}
 
 	/**
-	 * 过滤并创建 ApolloConfigNotification Map 。其中，KEY 为 Namespace 的名字<br>
-	 * 目的是客户端传递的 Namespace 的名字不是正确的，例如大小写不对，需要做下归一化( normalized )处理。
-	 * @param appId
-	 * @param notifications
-	 * @return
-	 */
+     * 过滤并创建 ApolloConfigNotification Map 。其中，KEY 为 Namespace归一化后 的名字<br>
+     * 目的是客户端传递的 Namespace 的名字不是正确的，例如大小写不对，需要做下归一化( normalized )处理。
+     * 
+     * @param appId
+     * @param notifications
+     * @return
+     */
 	private Map<String, ApolloConfigNotification> filterNotifications(String appId,
 			List<ApolloConfigNotification> notifications) {
-		// 返回结果信息
+        // 返回结果信息, key为namespace从数据库查询归一化之后的名字
 		Map<String, ApolloConfigNotification> filteredNotifications = Maps.newHashMap();
 		
 		for (ApolloConfigNotification notification : notifications) {
@@ -347,7 +349,7 @@ public class NotificationControllerV2 implements ReleaseMessageListener {
 		return newNotifications;
 	}
 
-	// 当有新的 ReleaseMessage 时，通知其对应的 Namespace 的，并且正在等待的请求。
+    // 当有新的 ReleaseMessage 时，通知其对应的 Namespace 的(设置deferredResults)，响应正在等待的请求。
 	@Override
 	public void handleMessage(ReleaseMessage message, String channel) {
 		logger.info("message received - channel: {}, message: {}", channel, message);

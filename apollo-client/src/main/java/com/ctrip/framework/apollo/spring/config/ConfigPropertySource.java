@@ -1,15 +1,15 @@
 package com.ctrip.framework.apollo.spring.config;
 
-import com.ctrip.framework.apollo.ConfigChangeListener;
 import java.util.Set;
 
 import org.springframework.core.env.EnumerablePropertySource;
 
 import com.ctrip.framework.apollo.Config;
+import com.ctrip.framework.apollo.ConfigChangeListener;
 
 /**
+ * 基于 Apollo Config 的 PropertySource 实现类。<br>
  * Property source wrapper for Config<br>
- * 基于 Apollo Config 的 PropertySource 实现类。
  *
  * @author Jason Song(song_s@ctrip.com)
  */
@@ -25,6 +25,7 @@ public class ConfigPropertySource extends EnumerablePropertySource<Config> {
 		super(name, source);
 	}
 
+    // 获取所有配置的属性名称
 	@Override
 	public String[] getPropertyNames() {
 		// 从 Config 中，获得属性名集合
@@ -35,8 +36,10 @@ public class ConfigPropertySource extends EnumerablePropertySource<Config> {
 		return propertyNames.toArray(new String[propertyNames.size()]);
 	}
 
+    // 根据名称获取属性值
 	@Override
 	public Object getProperty(String name) {
+        // source就是config
 		return this.source.getProperty(name, null);
 	}
 

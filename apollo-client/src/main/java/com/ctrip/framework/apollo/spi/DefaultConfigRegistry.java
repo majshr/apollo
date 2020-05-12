@@ -8,7 +8,7 @@ import org.slf4j.LoggerFactory;
 import com.google.common.collect.Maps;
 
 /**
- * Config注册器
+ * Config注册器, 管理"namespace-ConfigFactory缓存"
  * 
  * @author Jason Song(song_s@ctrip.com)
  */

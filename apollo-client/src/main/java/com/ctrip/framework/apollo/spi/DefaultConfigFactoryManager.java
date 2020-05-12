@@ -6,7 +6,8 @@ import com.ctrip.framework.apollo.build.ApolloInjector;
 import com.google.common.collect.Maps;
 
 /**
- * 缓存namespace和ConfigFactory
+ * ConfigFactory管理器<br>
+ * 缓存namespace和对应的ConfigFactory
  * 
  * @author Jason Song(song_s@ctrip.com)
  */

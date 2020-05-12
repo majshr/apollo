@@ -34,6 +34,13 @@ import com.ctrip.framework.apollo.common.dto.ReleaseHistoryDTO;
 import com.ctrip.framework.apollo.portal.environment.Env;
 import com.google.common.base.Joiner;
 
+/**
+ * 调用api时, 有失败重试功能, 只有有一个节点的api调用成功, 就成功
+ * 
+ * @author mengaijun
+ * @Description: TODO
+ * @date: 2020年5月12日 下午3:52:09
+ */
 @Service
 public class AdminServiceAPI {
 

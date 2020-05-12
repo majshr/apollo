@@ -11,11 +11,16 @@ import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 
 /**
+ * 自定义标签处理器<br>
+ * Apollo 的 XML Namespace 的处理器<br>
+ * <config namespaces = "" order = ""></config>
+ * 
  * @author Jason Song(song_s@ctrip.com)
  */
 public class NamespaceHandler extends NamespaceHandlerSupport {
     /**
      * "," 分隔字符串
+     * 
      */
     private static final Splitter NAMESPACE_SPLITTER = Splitter.on(",").omitEmptyStrings().trimResults();
 
@@ -24,6 +29,13 @@ public class NamespaceHandler extends NamespaceHandlerSupport {
         registerBeanDefinitionParser("config", new BeanParser());
     }
 
+    /**
+     * bean定义解析
+     * 
+     * @author mengaijun
+     * @Description: TODO
+     * @date: 2020年5月7日 上午9:38:57
+     */
     static class BeanParser extends AbstractSingleBeanDefinitionParser {
         @Override
         protected Class<?> getBeanClass(Element element) {

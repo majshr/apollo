@@ -1,6 +1,8 @@
 package com.ctrip.framework.apollo.spi;
 
 /**
+ * 配置工厂管理类
+ * 
  * @author Jason Song(song_s@ctrip.com)
  */
 public interface ConfigFactoryManager {

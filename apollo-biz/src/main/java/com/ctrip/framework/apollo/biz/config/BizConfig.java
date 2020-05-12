@@ -68,6 +68,12 @@ public class BizConfig extends RefreshableConfig {
         return checkInt(interval, 1, Integer.MAX_VALUE, DEFAULT_GRAY_RELEASE_RULE_SCAN_INTERVAL);
     }
 
+    /**
+     * 长轮询超时时间
+     * 
+     * @return long
+     * @date: 2020年5月9日 下午4:36:43
+     */
     public long longPollingTimeoutInMilli() {
         int timeout = getIntProperty("long.polling.timeout", DEFAULT_LONG_POLLING_TIMEOUT);
         // java client's long polling timeout is 90 seconds, so server side long

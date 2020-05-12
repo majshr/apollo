@@ -66,48 +66,51 @@ public class RemoteConfigLongPollService {
      * 长轮询 ExecutorService
      */
     private final ExecutorService m_longPollingService;
+
     /**
      * 是否停止长轮询的标识
      */
     private final AtomicBoolean m_longPollingStopped;
+
     /**
      * 失败定时重试策略，使用 {@link ExponentialSchedulePolicy}
      */
     private SchedulePolicy m_longPollFailSchedulePolicyInSecond;
+
     /**
      * 长轮询的 RateLimiter
      */
     private RateLimiter m_longPollRateLimiter;
+
     /**
      * 是否长轮询已经开始的标识
      */
     private final AtomicBoolean m_longPollStarted;
+
     /**
      * 长轮询的 Namespace Multimap 缓存<br>
-     *
-     * 通过 {@link #submit(String, RemoteConfigRepository)} 添加
-     * RemoteConfigRepository 。<br>
-     *
-     * KEY：Namespace 的名字 VALUE：RemoteConfigRepository 集合
+     * submit方法添加<br>
+     * KEY：Namespace 的名字<br>
+     * VALUE：RemoteConfigRepository 集合
      */
     private final Multimap<String, RemoteConfigRepository> m_longPollNamespaces;
+
     /**
-     * 通知编号 Map 缓存<br>
+     * 需要轮询是否更新的namespace和通知编号 的 Map 缓存<br>
      *
-     * KEY：Namespace 的名字 VALUE：最新的通知编号
+     * KEY：Namespace 的名字<br>
+     * VALUE：最新的通知编号
      */
     private final ConcurrentMap<String, Long> m_notifications;
 
     /**
      * 通知消息 Map 缓存<br>
      *
-     * KEY：Namespace 的名字 VALUE：ApolloNotificationMessages 对象
+     * KEY：Namespace 的名字 <br>
+     * VALUE：ApolloNotificationMessages 对象
      */
-    private final Map<String, ApolloNotificationMessages> m_remoteNotificationMessages;// namespaceName
-                                                                                       // ->
-                                                                                       // watchedKey
-                                                                                       // ->
-                                                                                       // notificationId
+    private final Map<String, ApolloNotificationMessages> m_remoteNotificationMessages;
+
     private Type m_responseType;
     private Gson gson;
     private ConfigUtil m_configUtil;
@@ -212,13 +215,13 @@ public class RemoteConfigLongPollService {
      * @param cluster
      * @param dataCenter
      * @param secret
-     *            void
      * @date: 2020年4月21日 上午10:59:31
      */
     private void doLongPollingRefresh(String appId, String cluster, String dataCenter, String secret) {
         final Random random = new Random();
+        // 本次长轮询的config service服务信息
         ServiceDTO lastServiceDto = null;
-        // 循环执行，直到停止或线程中断
+        // 循环执行，直到停止或线程中断(也就是循环进行长轮询请求, 处理完本地, 继续发送请求)
         while (!m_longPollingStopped.get() && !Thread.currentThread().isInterrupted()) {
 
             // 限流
@@ -257,17 +260,21 @@ public class RemoteConfigLongPollService {
                 transaction.addData("Url", url);
 
                 // 发起请求，返回 HttpResponse 对象
+                // 返回的是发生变更的namespace相关信息
                 final HttpResponse<List<ApolloConfigNotification>> response = m_httpUtil.doGet(request, m_responseType);
 
                 logger.debug("Long polling response: {}, url: {}", response.getStatusCode(), url);
                 
                 // 有新的通知，刷新本地的缓存
                 if (response.getStatusCode() == 200 && response.getBody() != null) {
-                    // 更新 m_notifications
+
+                    // 更新 m_notifications (最新通知编号)
                     updateNotifications(response.getBody());
-                    // 更新 m_remoteNotificationMessages
+                    // 更新 m_remoteNotificationMessages (最新的通知信息)
                     updateRemoteNotifications(response.getBody());
+
                     transaction.addData("Result", response.getBody().toString());
+
                     // 通知对应的 RemoteConfigRepository 们
                     notify(lastServiceDto, response.getBody());
                 }
@@ -306,11 +313,10 @@ public class RemoteConfigLongPollService {
     }
 
     /**
-     * 更新 m_remoteNotificationMessages
+     * 通知更新 m_remoteNotificationMessages
      * 
      * @param lastServiceDto
      * @param notifications
-     *            void
      * @date: 2020年4月21日 上午11:06:46
      */
     private void notify(ServiceDTO lastServiceDto, List<ApolloConfigNotification> notifications) {
@@ -344,9 +350,10 @@ public class RemoteConfigLongPollService {
     }
 
     /**
-     * 更新 m_notifications
+     * 有新通知, 更新 m_notifications(最新发通知编号)
      * 
      * @param deltaNotifications
+     *            发生变更的配置信息
      * @date: 2020年4月21日 上午11:04:50
      */
     private void updateNotifications(List<ApolloConfigNotification> deltaNotifications) {
@@ -355,11 +362,13 @@ public class RemoteConfigLongPollService {
             if (Strings.isNullOrEmpty(notification.getNamespaceName())) {
                 continue;
             }
-            // 更新 m_notifications
+
+            // 更新 m_notifications最新通知编号
             String namespaceName = notification.getNamespaceName();
             if (m_notifications.containsKey(namespaceName)) {
                 m_notifications.put(namespaceName, notification.getNotificationId());
             }
+
             // since .properties are filtered out by default, so we need to
             // check if there is notification with .properties suffix
             // 因为 .properties 在默认情况下被过滤掉，所以我们需要检查是否有 .properties 后缀的通知。如有，更新
@@ -389,6 +398,7 @@ public class RemoteConfigLongPollService {
             if (notification.getMessages() == null || notification.getMessages().isEmpty()) {
                 continue;
             }
+
             // 若不存在 Namespace 对应的 ApolloNotificationMessages ，进行创建
             ApolloNotificationMessages localRemoteMessages = m_remoteNotificationMessages
                     .get(notification.getNamespaceName());
@@ -407,7 +417,7 @@ public class RemoteConfigLongPollService {
     }
 
     /**
-     * 长轮询 Config Service 的配置变更通知 /notifications/v2 接口的 URL
+     * 组装长轮询 Config Service 的配置变更通知 /notifications/v2 接口的 URL
      * 
      * @param uri
      * @param appId
@@ -446,7 +456,7 @@ public class RemoteConfigLongPollService {
     }
 
     /**
-     * 长轮询 Config Service 的配置变更通知 /notifications/v2 接口的 URL
+     * 组装长轮询 Config Service 的配置变更通知 /notifications/v2 接口的 URL
      * 
      * @param notificationsMap
      * @return String

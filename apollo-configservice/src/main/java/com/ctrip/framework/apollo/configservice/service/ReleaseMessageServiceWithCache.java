@@ -29,7 +29,8 @@ import com.google.common.collect.Maps;
 
 /**
  * 缓存 ReleaseMessage 的 Service 实现类。通过将 ReleaseMessage 缓存在内存中，提高查询性能。<br>
- * 1, 启动时，初始化 ReleaseMessage 到缓存。<br>
+ * 1, 启动时，初始化 ReleaseMessage 到缓存。启动定时任务(根据InitializingBean), 周期性扫面加载到缓存, 当发生2后,
+ * 停止扫描<br>
  * 2, 新增时，基于 ReleaseMessageListener ，通知有新的 ReleaseMessage ，根据是否有消息间隙，直接使用该
  * ReleaseMessage 或从数据库读取。<br>
  * 
@@ -56,10 +57,10 @@ public class ReleaseMessageServiceWithCache implements ReleaseMessageListener, I
 	private volatile long maxIdScanned;
 
 	/**
-	 * ReleaseMessage 缓存
-	 *
-	 * KEY：`ReleaseMessage.message` VALUE：对应的最新的 ReleaseMessage 记录
-	 */
+     * ReleaseMessage发布信息 缓存
+     *
+     * KEY：`ReleaseMessage.message` VALUE：对应的最新的 ReleaseMessage 记录
+     */
 	private ConcurrentMap<String, ReleaseMessage> releaseMessageCache;
 
 	/**
@@ -89,6 +90,13 @@ public class ReleaseMessageServiceWithCache implements ReleaseMessageListener, I
 				.newSingleThreadExecutor(ApolloThreadFactory.create("ReleaseMessageServiceWithCache", true));
 	}
 
+    /**
+     * 从集合中查询最新发布的消息
+     * 
+     * @param messages
+     * @return ReleaseMessage
+     * @date: 2020年5月11日 上午9:41:57
+     */
 	public ReleaseMessage findLatestReleaseMessageForMessages(Set<String> messages) {
 		if (CollectionUtils.isEmpty(messages)) {
 			return null;
@@ -164,9 +172,7 @@ public class ReleaseMessageServiceWithCache implements ReleaseMessageListener, I
 		// 从 ServerConfig 中，读取任务的周期配置
 		populateDataBaseInterval();
 
-        // 初始, 第一次拉取 ReleaseMessage 到缓存
-		// block the startup process until load finished
-		// this should happen before ReleaseMessageScanner due to autowire
+        // 初始, 第一次拉取 ReleaseMessage 到缓存, 从id > 0开始拉取
 		loadReleaseMessages(0);
 
 		// 创建定时任务，增量拉取 ReleaseMessage 到缓存，用以处理初始化期间，产生的 ReleaseMessage 遗漏的问题。
@@ -219,11 +225,12 @@ public class ReleaseMessageServiceWithCache implements ReleaseMessageListener, I
      * 拉取ReleaseMessage到缓存(每次批量处理500条记录)
      * 
      * @param startId
+     *            获取消息起始id
      */
 	private void loadReleaseMessages(long startId) {
 		boolean hasMore = true;
 		while (hasMore && !Thread.currentThread().isInterrupted()) {
-			// 查询500条
+            // 查询500条; 即每次循环处理500条
 			// current batch is 500
 			List<ReleaseMessage> releaseMessages = releaseMessageRepository
 					.findFirst500ByIdGreaterThanOrderByIdAsc(startId);

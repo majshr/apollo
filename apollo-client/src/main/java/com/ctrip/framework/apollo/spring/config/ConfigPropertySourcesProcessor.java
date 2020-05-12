@@ -9,6 +9,7 @@ import com.ctrip.framework.foundation.internals.ServiceBootstrap;
 
 /**
  * 用于处理 Spring XML 的配置。<br>
+ * Apollo PropertySource 处理器。<br>
  * Apollo Property Sources processor for Spring XML Based Application
  *
  * @author Jason Song(song_s@ctrip.com)

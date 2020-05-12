@@ -46,7 +46,7 @@ import com.google.gson.Gson;
 /**
  * 实现 AbstractConfigRepository 抽象类，远程配置 Repository 。<br>
  * 实现从 Config Service 拉取配置，并缓存在内存中。并且，定时 + 实时刷新缓存。<br>
- * 不是spring管理的
+ * 每个namespace对应一个RemoteConfigRepository对象
  * 
  * @author Jason Song(song_s@ctrip.com)
  */
@@ -95,8 +95,8 @@ public class RemoteConfigRepository extends AbstractConfigRepository {
 
 	// ***********************通知属性*************************8
 	/**
-	 * 指向 ServiceDTO( Config Service 信息) 的 AtomicReference
-	 */
+     * 指向 ServiceDTO(长轮询通知变化的Config Service的信息) 的 AtomicReference
+     */
 	private final AtomicReference<ServiceDTO> m_longPollServiceDto;
 	
 	/**
@@ -108,7 +108,8 @@ public class RemoteConfigRepository extends AbstractConfigRepository {
      * 是否强制拉取缓存的标记<br>
      *
      * 若为 true ，则多一轮从 Config Service 拉取配置<br>
-     * 为 true 的原因，RemoteConfigRepository 知道 Config Service 有配置刷新<br>
+     * 为 true 的原因，RemoteConfigRepository 知道 Config Service 有配置刷新,
+     * 例如有新的通知的情况下。<br>
      */
 	private final AtomicBoolean m_configNeedForceRefresh;
 	
@@ -172,8 +173,8 @@ public class RemoteConfigRepository extends AbstractConfigRepository {
 	}
 
 	/**
-	 * 初始化定时刷新配置的任务
-	 */
+     * 初始化定时刷新配置的任务(每隔配置时间调用trySync()方法更新)
+     */
 	private void schedulePeriodicRefresh() {
 		logger.debug("Schedule periodic refresh with interval: {} {}", m_configUtil.getRefreshInterval(),
 				m_configUtil.getRefreshIntervalTimeUnit());
@@ -228,6 +229,13 @@ public class RemoteConfigRepository extends AbstractConfigRepository {
 		}
 	}
 
+    /**
+     * 配置转换为properties格式
+     * 
+     * @param apolloConfig
+     * @return Properties
+     * @date: 2020年5月8日 下午5:33:38
+     */
 	private Properties transformApolloConfigToProperties(ApolloConfig apolloConfig) {
 		Properties result = propertiesFactory.getPropertiesInstance();
 		result.putAll(apolloConfig.getConfigurations());
@@ -289,7 +297,7 @@ public class RemoteConfigRepository extends AbstractConfigRepository {
 					}
 				}
 
-				// 组装查询配置的地址
+                // 组装查询配置的地址(http://172.16.91.3:8080/configs/app-m/default/application?ip=172.16.91.3)
 				url = assembleQueryConfigUrl(configService.getHomepageUrl(), appId, cluster, m_namespace, dataCenter,
 						m_remoteMessages.get(), m_configCache.get());
 

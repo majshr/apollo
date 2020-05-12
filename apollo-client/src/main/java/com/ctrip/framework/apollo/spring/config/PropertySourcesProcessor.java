@@ -32,9 +32,10 @@ import com.google.common.collect.Sets;
 /**
  * Apollo Property Sources processor for Spring Annotation Based Application.
  * <br />
- * <br />
- * 实现 BeanFactoryPostProcessor、EnvironmentAware、PriorityOrdered 接口，PropertySource 处理器。
- *
+ * 保存了所有需要获取的名称空间 <br>
+ * 实现 BeanFactoryPostProcessor、EnvironmentAware、PriorityOrdered
+ * 接口，PropertySource 处理器。 <br/>
+ * <br/>
  * The reason why PropertySourcesProcessor implements
  * {@link BeanFactoryPostProcessor} instead of
  * {@link org.springframework.beans.factory.support.BeanDefinitionRegistryPostProcessor}
@@ -46,13 +47,17 @@ import com.google.common.collect.Sets;
  */
 public class PropertySourcesProcessor implements BeanFactoryPostProcessor, EnvironmentAware, PriorityOrdered {
 	/**
-	 * Namespace 名字集合<br>
-	 *
-	 * KEY：优先级     VALUE：Namespace 名字集合<br>
-	 * Apollo 在解析到的 XML 或注解配置的 Apollo Namespace 时，会调用 #addNamespaces(namespaces,
-	 * order) 方法，添加到其中。
-	 */
+     * Namespace 名字集合<br>
+     * KEY：优先级<br>
+     * VALUE：Namespace 名字集合<br>
+     * 
+     * Apollo 在解析到的 XML 或注解配置的 Apollo Namespace 时，会调用 #addNamespaces(namespaces,
+     * order) 方法，添加到其中。<br>
+     * 
+     * 在BeanFactoryPostProcessor执行前解析完成
+     */
 	private static final Multimap<Integer, String> NAMESPACE_NAMES = LinkedHashMultimap.create();
+
 	private static final Set<BeanFactory> AUTO_UPDATE_INITIALIZED_BEAN_FACTORIES = Sets.newConcurrentHashSet();
 
 	/**
@@ -85,6 +90,9 @@ public class PropertySourcesProcessor implements BeanFactoryPostProcessor, Envir
 		return NAMESPACE_NAMES.putAll(order, namespaces);
 	}
 
+    // 实现 BeanFactoryPostProcessor 接口，可以在 spring 的 bean 创建之前，修改 bean 的定义属性。
+    // 可以同时配置多个BeanFactoryPostProcessor ，并通过设置 order
+    // 属性来控制各个BeanFactoryPostProcessor 的执行次序。
 	@Override
 	public void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory) throws BeansException {
 		// 初始化 PropertySource 们
@@ -94,10 +102,12 @@ public class PropertySourcesProcessor implements BeanFactoryPostProcessor, Envir
 	}
 
 	/**
-	 * 初始化 PropertySource 们
-	 * 
-	 * @date: 2020年4月22日 上午10:15:53
-	 */
+     * 初始化 PropertySource 们(每个namespace对应一个ConfigPropertySource,
+     * 一个ConfigPropertySource对应一个DefaultConfig,
+     * 一个DefaultConfig对应一个RemoteRepository)
+     * 
+     * @date: 2020年4月22日 上午10:15:53
+     */
 	private void initializePropertySources() {
 		// 若 `environment` 已经有 APOLLO_PROPERTY_SOURCE_NAME 属性源，说明已经初始化，直接返回。
 		if (environment.getPropertySources().contains(PropertySourcesConstants.APOLLO_PROPERTY_SOURCE_NAME)) {
@@ -105,7 +115,8 @@ public class PropertySourcesProcessor implements BeanFactoryPostProcessor, Envir
 			return;
 		}
 		
-		// 创建 CompositePropertySource 对象，组合多个 Namespace 的 ConfigPropertySource 。
+        // 创建复合类型的属性源 CompositePropertySource 对象，
+        // 组合多个 Namespace 的 ConfigPropertySource 。
 		CompositePropertySource composite = new CompositePropertySource(
 				PropertySourcesConstants.APOLLO_PROPERTY_SOURCE_NAME);
 
@@ -117,11 +128,11 @@ public class PropertySourcesProcessor implements BeanFactoryPostProcessor, Envir
 		while (iterator.hasNext()) {
 			int order = iterator.next();
 			for (String namespace : NAMESPACE_NAMES.get(order)) {
-				// 创建 Apollo Config 对象
+                // 创建namespace对应的 Apollo Config 对象
 				Config config = ConfigService.getConfig(namespace);
 
 				// 创建 Namespace 对应的 ConfigPropertySource 对象
-				// 添加到 `composite` 中。
+                // 添加到 `composite` 复合属性中。
 				composite.addPropertySource(configPropertySourceFactory.getConfigPropertySource(namespace, config));
 			}
 		}
@@ -130,7 +141,7 @@ public class PropertySourcesProcessor implements BeanFactoryPostProcessor, Envir
 		NAMESPACE_NAMES.clear();
 
 		// add after the bootstrap property source or to the first
-		// 若有 APOLLO_BOOTSTRAP_PROPERTY_SOURCE_NAME 属性源，添加到其后
+        // 若有 "ApolloBootstrapPropertySources" 属性源，添加到其后
 		if (environment.getPropertySources().contains(PropertySourcesConstants.APOLLO_BOOTSTRAP_PROPERTY_SOURCE_NAME)) {
 
 			// ensure ApolloBootstrapPropertySources is still the first
@@ -144,6 +155,12 @@ public class PropertySourcesProcessor implements BeanFactoryPostProcessor, Envir
 		}
 	}
 
+    /**
+     * 确保启动类属性源在首个
+     * 
+     * @param environment
+     * @date: 2020年5月7日 上午10:30:03
+     */
 	private void ensureBootstrapPropertyPrecedence(ConfigurableEnvironment environment) {
 		MutablePropertySources propertySources = environment.getPropertySources();
 

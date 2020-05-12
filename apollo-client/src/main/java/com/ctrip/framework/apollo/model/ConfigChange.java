@@ -3,6 +3,7 @@ package com.ctrip.framework.apollo.model;
 import com.ctrip.framework.apollo.enums.PropertyChangeType;
 
 /**
+ * 配置改变的信息<br>
  * Holds the information for a config change.
  * 
  * @author Jason Song(song_s@ctrip.com)

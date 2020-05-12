@@ -71,7 +71,7 @@ public class NamespaceService {
     }
 
     /**
-     * 创建namespace
+     * 创建namespace(使用adminservice api)
      * 
      * @param env
      * @param namespace

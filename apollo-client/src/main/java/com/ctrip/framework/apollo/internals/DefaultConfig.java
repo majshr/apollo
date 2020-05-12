@@ -1,6 +1,5 @@
 package com.ctrip.framework.apollo.internals;
 
-import com.ctrip.framework.apollo.enums.ConfigSourceType;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collections;
@@ -16,6 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.ctrip.framework.apollo.core.utils.ClassLoaderUtil;
+import com.ctrip.framework.apollo.enums.ConfigSourceType;
 import com.ctrip.framework.apollo.enums.PropertyChangeType;
 import com.ctrip.framework.apollo.model.ConfigChange;
 import com.ctrip.framework.apollo.model.ConfigChangeEvent;
@@ -27,12 +27,12 @@ import com.google.common.util.concurrent.RateLimiter;
 /**
  * 实现 RepositoryChangeListener 接口，继承 AbstractConfig 抽象类，默认 Config 实现类。<br>
  * 
- * 为什么 DefaultConfig 实现 RepositoryChangeListener 接口？
- * ConfigRepository 的一个实现类 RemoteConfigRepository ，会从远程 Config Service 加载配置。
- * 但是 Config Service 的配置不是一成不变，可以在 Portal 进行修改。
- * 所以 RemoteConfigRepository 会在配置变更时，从 Admin Service 重新加载配置。
- * 为了实现 Config 监听配置的变更，所以需要将 DefaultConfig 注册为 ConfigRepository 的监听器。
- * 因此，DefaultConfig 需要实现 RepositoryChangeListener 接口。
+ * 为什么 DefaultConfig 实现 RepositoryChangeListener 接口？ ConfigRepository 的一个实现类
+ * RemoteConfigRepository ，会从远程 Config Service 加载配置。 但是 Config Service
+ * 的配置不是一成不变，可以在 Portal 进行修改。 所以 RemoteConfigRepository 会在配置变更时，从 Admin Service
+ * 重新加载配置。 为了实现 Config 监听配置的变更，所以需要将 DefaultConfig 注册为 ConfigRepository 的监听器,
+ * ConfigRepository发现配置改变, 回调。 因此，DefaultConfig 需要实现 RepositoryChangeListener
+ * 接口。
  * 
  * @author Jason Song(song_s@ctrip.com)
  */
@@ -43,16 +43,16 @@ public class DefaultConfig extends AbstractConfig implements RepositoryChangeLis
 	 */
 	private final String m_namespace;
 	/**
-	 * 项目下，Namespace 对应的配置文件的 Properties
-	 */
+     * 本地项目下，Namespace 对应的配置文件的 Properties
+     */
 	private final Properties m_resourceProperties;
 	/**
-	 * 配置 Properties 的缓存引用
-	 */
+     * 远程配置中心, 配置 Properties 的缓存引用
+     */
 	private final AtomicReference<Properties> m_configProperties;
 	/**
-	 * 配置 Repository
-	 */
+     * 远程配置, 配置 Repository
+     */
 	private final ConfigRepository m_configRepository;
 	/**
 	 * 答应告警限流器。当读取不到属性值，会打印告警日志。通过该限流器，避免打印过多日志。
@@ -99,11 +99,12 @@ public class DefaultConfig extends AbstractConfig implements RepositoryChangeLis
 	@Override
 	public String getProperty(String key, String defaultValue) {
 		// step 1: check system properties, i.e. -Dkey=value
+        // 系统属性优先
 		// 从系统 Properties 获得属性，例如，JVM 启动参数。
 		String value = System.getProperty(key);
 
 		// step 2: check local cached properties file
-		// 从缓存 Properties 获得属性
+        // 从缓存的 远程配置中心属性中 获得属性
 		if (value == null && m_configProperties.get() != null) {
 			value = m_configProperties.get().getProperty(key);
 		}
@@ -150,6 +151,14 @@ public class DefaultConfig extends AbstractConfig implements RepositoryChangeLis
 		return m_sourceType;
 	}
 
+    /**
+     * 获取属性名称集合
+     * 
+     * @param properties
+     * @return Set<String>
+     * 
+     * @date: 2020年5月9日 上午11:39:41
+     */
 	private Set<String> stringPropertyNames(Properties properties) {
 		// jdk9以下版本Properties#enumerateStringProperties方法存在性能问题，keys() + get(k) 重复迭代,
 		// jdk9之后改为entrySet遍历.
@@ -192,6 +201,14 @@ public class DefaultConfig extends AbstractConfig implements RepositoryChangeLis
 		m_sourceType = sourceType;
 	}
 
+    /**
+     * 计算更新改变的配置
+     * 
+     * @param newConfigProperties
+     * @param sourceType
+     * @return Map<String,ConfigChange>
+     * @date: 2020年5月9日 下午2:18:34
+     */
 	private Map<String, ConfigChange> updateAndCalcConfigChanges(Properties newConfigProperties,
 			ConfigSourceType sourceType) {
 		List<ConfigChange> configChanges = calcPropertyChanges(m_namespace, m_configProperties.get(),
@@ -247,10 +264,11 @@ public class DefaultConfig extends AbstractConfig implements RepositoryChangeLis
 	}
 
 	/**
-	 * 获取项目下，Namespace 对应的配置文件的 Properties 
-	 * @param namespace
-	 * @return
-	 */
+     * 获取项目下(本地配置文件)，Namespace 对应的配置文件的 Properties
+     * 
+     * @param namespace
+     * @return
+     */
 	private Properties loadFromResource(String namespace) {
 		// 生成文件名
 		String name = String.format("META-INF/config/%s.properties", namespace);

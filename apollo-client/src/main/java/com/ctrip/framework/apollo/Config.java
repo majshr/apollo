@@ -8,7 +8,7 @@ import com.ctrip.framework.apollo.enums.ConfigSourceType;
 import com.google.common.base.Function;
 
 /**
- * 配置接口
+ * apollo定义的配置接口(用于存储配置信息, 每个namespace对应自己的配置)
  * 
  * @author Jason Song(song_s@ctrip.com)
  */

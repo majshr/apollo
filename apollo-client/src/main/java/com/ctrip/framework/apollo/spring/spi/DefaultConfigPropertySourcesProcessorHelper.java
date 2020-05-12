@@ -1,50 +1,78 @@
 package com.ctrip.framework.apollo.spring.spi;
 
+import java.util.HashMap;
+import java.util.Map;
+
+import org.springframework.beans.BeansException;
+import org.springframework.beans.factory.support.BeanDefinitionRegistry;
+import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
+
 import com.ctrip.framework.apollo.core.spi.Ordered;
 import com.ctrip.framework.apollo.spring.annotation.ApolloAnnotationProcessor;
 import com.ctrip.framework.apollo.spring.annotation.ApolloJsonValueProcessor;
 import com.ctrip.framework.apollo.spring.annotation.SpringValueProcessor;
 import com.ctrip.framework.apollo.spring.property.SpringValueDefinitionProcessor;
 import com.ctrip.framework.apollo.spring.util.BeanRegistrationUtil;
-import java.util.HashMap;
-import java.util.Map;
-import org.springframework.beans.BeansException;
-import org.springframework.beans.factory.support.BeanDefinitionRegistry;
-import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
 
 public class DefaultConfigPropertySourcesProcessorHelper implements ConfigPropertySourcesProcessorHelper {
 
-  @Override
-  public void postProcessBeanDefinitionRegistry(BeanDefinitionRegistry registry) throws BeansException {
-    Map<String, Object> propertySourcesPlaceholderPropertyValues = new HashMap<>();
-    // to make sure the default PropertySourcesPlaceholderConfigurer's priority is higher than PropertyPlaceholderConfigurer
-    propertySourcesPlaceholderPropertyValues.put("order", 0);
+    @Override
+    public void postProcessBeanDefinitionRegistry(BeanDefinitionRegistry registry) throws BeansException {
+        Map<String, Object> propertySourcesPlaceholderPropertyValues = new HashMap<>();
+        // to make sure the default PropertySourcesPlaceholderConfigurer's
+        // priority is higher than PropertyPlaceholderConfigurer
+        propertySourcesPlaceholderPropertyValues.put("order", 0);
 
-    BeanRegistrationUtil.registerBeanDefinitionIfNotExists(registry, PropertySourcesPlaceholderConfigurer.class.getName(),
-        PropertySourcesPlaceholderConfigurer.class, propertySourcesPlaceholderPropertyValues);
-    BeanRegistrationUtil.registerBeanDefinitionIfNotExists(registry, ApolloAnnotationProcessor.class.getName(),
-        ApolloAnnotationProcessor.class);
-    BeanRegistrationUtil.registerBeanDefinitionIfNotExists(registry, SpringValueProcessor.class.getName(),
-        SpringValueProcessor.class);
-    BeanRegistrationUtil.registerBeanDefinitionIfNotExists(registry, ApolloJsonValueProcessor.class.getName(),
-        ApolloJsonValueProcessor.class);
+        // 注册 PropertySourcesPlaceholderConfigurer 到 BeanDefinitionRegistry 中，替换
+        // PlaceHolder 为对应的属性值，参考文章
+        // https://leokongwq.github.io/2016/12/28/spring-PropertyPlaceholderConfigurer.html
+        BeanRegistrationUtil.registerBeanDefinitionIfNotExists(registry,
+                PropertySourcesPlaceholderConfigurer.class.getName(), PropertySourcesPlaceholderConfigurer.class,
+                propertySourcesPlaceholderPropertyValues);
 
-    processSpringValueDefinition(registry);
-  }
+        // 注册 ApolloAnnotationProcessor 到 BeanDefinitionRegistry 中，因为 XML 配置的
+        // Bean 对象，也可能存在 @ApolloConfig 和 @ApolloConfigChangeListener 注解。
+        BeanRegistrationUtil.registerBeanDefinitionIfNotExists(registry, ApolloAnnotationProcessor.class.getName(),
+                ApolloAnnotationProcessor.class);
 
-  /**
-   * For Spring 3.x versions, the BeanDefinitionRegistryPostProcessor would not be instantiated if
-   * it is added in postProcessBeanDefinitionRegistry phase, so we have to manually call the
-   * postProcessBeanDefinitionRegistry method of SpringValueDefinitionProcessor here...
-   */
-  private void processSpringValueDefinition(BeanDefinitionRegistry registry) {
-    SpringValueDefinitionProcessor springValueDefinitionProcessor = new SpringValueDefinitionProcessor();
+        // 注册 SpringValueProcessor 到 BeanDefinitionRegistry 中，用于 PlaceHolder
+        // 自动更新机制
+        BeanRegistrationUtil.registerBeanDefinitionIfNotExists(registry, SpringValueProcessor.class.getName(),
+                SpringValueProcessor.class);
 
-    springValueDefinitionProcessor.postProcessBeanDefinitionRegistry(registry);
-  }
+        // 注册 ApolloJsonValueProcessor 到 BeanDefinitionRegistry 中，因为 XML 配置的
+        // Bean 对象，也可能存在 @ApolloJsonValue 注解。
+        BeanRegistrationUtil.registerBeanDefinitionIfNotExists(registry, ApolloJsonValueProcessor.class.getName(),
+                ApolloJsonValueProcessor.class);
 
-  @Override
-  public int getOrder() {
-    return Ordered.LOWEST_PRECEDENCE;
-  }
+        // 处理 XML 配置的 Spring PlaceHolder
+        processSpringValueDefinition(registry);
+    }
+
+    /**
+     * 处理 XML 配置的 Spring PlaceHolder<br>
+     * 
+     * 在 Spring 3.x 版本中，BeanDefinitionRegistryPostProcessor (
+     * SpringValueDefinitionProcessor 实现了该接口 )无法被实例化，在
+     * postProcessBeanDefinitionRegistry 阶段，因此，我们不得不手动创建
+     * SpringValueDefinitionProcessor 对象，并调用其
+     * #postProcessBeanDefinitionRegistry(BeanDefinitionRegistry) 方法。<br>
+     * 
+     * For Spring 3.x versions, the BeanDefinitionRegistryPostProcessor would
+     * not be instantiated if it is added in postProcessBeanDefinitionRegistry
+     * phase, so we have to manually call the postProcessBeanDefinitionRegistry
+     * method of SpringValueDefinitionProcessor here...
+     */
+    private void processSpringValueDefinition(BeanDefinitionRegistry registry) {
+
+        // 创建 SpringValueDefinitionProcessor 对象
+        SpringValueDefinitionProcessor springValueDefinitionProcessor = new SpringValueDefinitionProcessor();
+        // 处理 XML 配置的 Spring PlaceHolder
+        springValueDefinitionProcessor.postProcessBeanDefinitionRegistry(registry);
+    }
+
+    @Override
+    public int getOrder() {
+        return Ordered.LOWEST_PRECEDENCE;
+    }
 }

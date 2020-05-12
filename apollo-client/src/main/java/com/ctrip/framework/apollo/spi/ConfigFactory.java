@@ -5,7 +5,7 @@ import com.ctrip.framework.apollo.ConfigFile;
 import com.ctrip.framework.apollo.core.enums.ConfigFileFormat;
 
 /**
- * 配置工厂接口
+ * 配置工厂接口(每个namespace对应一个ConfigFactory)
  * 
  * @author Jason Song(song_s@ctrip.com)
  */

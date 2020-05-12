@@ -88,6 +88,13 @@ public class DefaultConfigFactory implements ConfigFactory {
         return new LocalFileConfigRepository(namespace, createRemoteConfigRepository(namespace));
     }
 
+    /**
+     * 创建namespace对应的RemoteConfigRepository对象
+     * 
+     * @param namespace
+     * @return RemoteConfigRepository
+     * @date: 2020年5月8日 下午5:14:18
+     */
     RemoteConfigRepository createRemoteConfigRepository(String namespace) {
         return new RemoteConfigRepository(namespace);
     }
@@ -101,8 +108,16 @@ public class DefaultConfigFactory implements ConfigFactory {
         return new PropertiesCompatibleFileConfigRepository(configFile);
     }
 
-    // for namespaces whose format are not properties, the file extension must
-    // be present, e.g. application.yaml
+    /**
+     * 根据名称判断配置文件类型 <br>
+     * for namespaces whose format are not properties, the file extension must
+     * be present, e.g. application.yaml
+     * 
+     * @param namespaceName
+     * @return ConfigFileFormat
+     * @date: 2020年5月8日 下午5:08:07
+     */
+
     ConfigFileFormat determineFileFormat(String namespaceName) {
         String lowerCase = namespaceName.toLowerCase();
         for (ConfigFileFormat format : ConfigFileFormat.values()) {

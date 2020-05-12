@@ -15,6 +15,9 @@ import com.ctrip.framework.apollo.spi.ConfigRegistry;
 public class ConfigService {
     private static final ConfigService s_instance = new ConfigService();
 
+    /**
+     * config管理器
+     */
     private volatile ConfigManager m_configManager;
     private volatile ConfigRegistry m_configRegistry;
 

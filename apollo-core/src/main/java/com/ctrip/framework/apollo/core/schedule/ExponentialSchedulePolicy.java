@@ -2,6 +2,7 @@ package com.ctrip.framework.apollo.core.schedule;
 
 /**
  * 基于指数级计算的定时策略实现类。<br>
+ * 每次失败, 延迟时间乘以2, 直到延迟时间上限: 1 2 4 8 16 32 64 120 120 120
  * 
  * @author Jason Song(song_s@ctrip.com)
  */

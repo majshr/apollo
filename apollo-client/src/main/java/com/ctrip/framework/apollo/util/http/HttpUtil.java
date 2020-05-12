@@ -18,6 +18,8 @@ import com.google.common.io.CharStreams;
 import com.google.gson.Gson;
 
 /**
+ * Http调用工具类
+ * 
  * @author Jason Song(song_s@ctrip.com)
  */
 public class HttpUtil {

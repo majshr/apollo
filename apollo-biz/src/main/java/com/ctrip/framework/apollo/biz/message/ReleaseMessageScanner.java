@@ -20,12 +20,17 @@ import com.ctrip.framework.apollo.tracer.spi.Transaction;
 import com.google.common.collect.Lists;
 
 /**
+ * 发布消息扫描器<br>
+ * ConfigServiceAutoConfiguration.releaseMessageScanner()使用@Bean配置
+ * 
  * @author Jason Song(song_s@ctrip.com)
  */
 public class ReleaseMessageScanner implements InitializingBean {
 	private static final Logger logger = LoggerFactory.getLogger(ReleaseMessageScanner.class);
+
 	@Autowired
 	private BizConfig bizConfig;
+
 	@Autowired
 	private ReleaseMessageRepository releaseMessageRepository;
 
@@ -35,13 +40,15 @@ public class ReleaseMessageScanner implements InitializingBean {
 	private int databaseScanInterval;
 
 	/**
-	 * 监听器数组
-	 */
+     * 监听器数组, 扫面到新的发布消息时回调
+     */
 	private List<ReleaseMessageListener> listeners;
+
 	/**
 	 * 定时任务服务
 	 */
 	private ScheduledExecutorService executorService;
+
 	/**
 	 * 最后扫描到的 ReleaseMessage 的编号
 	 */
@@ -60,7 +67,7 @@ public class ReleaseMessageScanner implements InitializingBean {
 	public void afterPropertiesSet() throws Exception {
 		// 从 ServerConfig 中获得频率
 		databaseScanInterval = bizConfig.releaseMessageScanIntervalInMilli();
-		// 获得最大的 ReleaseMessage 的编号
+        // 获得最大的 ReleaseMessage 的编号(项目初始时, 记录, 都自己处理, 此处仅扫面新增的记录)
 		maxIdScanned = loadLargestMessageId();
 		
 		// 创建从 DB 中扫描 ReleaseMessage 表的定时任务
@@ -94,9 +101,9 @@ public class ReleaseMessageScanner implements InitializingBean {
 	}
 
 	/**
-	 * 扫描信息
-	 * Scan messages, continue scanning until there is no more messages
-	 */
+     * 扫描信息(仅扫描新增的记录)<br>
+     * Scan messages, continue scanning until there is no more messages
+     */
 	private void scanMessages() {
 		boolean hasMoreMessages = true;
 		while (hasMoreMessages && !Thread.currentThread().isInterrupted()) {
@@ -119,7 +126,7 @@ public class ReleaseMessageScanner implements InitializingBean {
 			return false;
 		}
 		
-		// 触发监听器
+        // 有新消息触发监听器
 		fireMessageScanned(releaseMessages);
 		// 获得新的 maxIdScanned ，取最后一条记录
 		int messageScanned = releaseMessages.size();
@@ -129,11 +136,11 @@ public class ReleaseMessageScanner implements InitializingBean {
 	}
 
 	/**
-	 * 获取第一条ReleaseMessage
-	 * find largest message id as the current start point
-	 * 
-	 * @return current largest message id
-	 */
+     * 获取id最大的一条ReleaseMessage<br>
+     * find largest message id as the current start point
+     * 
+     * @return current largest message id
+     */
 	private long loadLargestMessageId() {
 		ReleaseMessage releaseMessage = releaseMessageRepository.findTopByOrderByIdDesc();
 		return releaseMessage == null ? 0 : releaseMessage.getId();
