@@ -68,7 +68,7 @@ public class ConfigServiceLocator {
     }
 
     /**
-     * 构造时初始化
+     * 构造方法执行时初始化
      * 
      * @date: 2020年4月27日 上午9:51:53
      */

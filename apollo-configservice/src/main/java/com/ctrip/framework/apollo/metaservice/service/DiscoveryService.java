@@ -23,6 +23,13 @@ public class DiscoveryService {
 
     private final EurekaClient eurekaClient;
 
+    /**
+     * spring cloud的服务发现机制, eureka的实现EurekaDiscoveryClient, 内部有一个EurekaClient,
+     * 用于发现服务
+     */
+    // public class EurekaDiscoveryClient implements DiscoveryClient
+    org.springframework.cloud.client.discovery.DiscoveryClient discoveryClient;
+
     public DiscoveryService(final EurekaClient eurekaClient) {
         this.eurekaClient = eurekaClient;
     }

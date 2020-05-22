@@ -46,7 +46,7 @@ import com.google.gson.Gson;
 /**
  * 实现 AbstractConfigRepository 抽象类，远程配置 Repository 。<br>
  * 实现从 Config Service 拉取配置，并缓存在内存中。并且，定时 + 实时刷新缓存。<br>
- * 每个namespace对应一个RemoteConfigRepository对象
+ * 每个namespace对应一个RemoteConfigRepository对象，用于获取远程信息更新
  * 
  * @author Jason Song(song_s@ctrip.com)
  */
