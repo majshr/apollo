@@ -39,7 +39,7 @@ public class SpringValueRegistry {
     private final Object LOCK = new Object();
 
     /**
-     * 注册
+     * 注册属性和值
      * 
      * @param beanFactory
      * @param key

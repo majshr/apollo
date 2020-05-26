@@ -105,6 +105,13 @@ public class SpringValue {
         }
     }
 
+    /**
+     * 设置对象的某个字段的值
+     * 
+     * @param newVal
+     * @throws IllegalAccessException
+     * @date: 2020年5月26日 上午10:42:08
+     */
     private void injectField(Object newVal) throws IllegalAccessException {
         Object bean = beanRef.get();
         if (bean == null) {
@@ -116,6 +123,14 @@ public class SpringValue {
         field.setAccessible(accessible);
     }
 
+    /**
+     * 根据调用set方法设置对象某个字段的值
+     * 
+     * @param newVal
+     * @throws InvocationTargetException
+     * @throws IllegalAccessException
+     * @date: 2020年5月26日 上午10:42:31
+     */
     private void injectMethod(Object newVal) throws InvocationTargetException, IllegalAccessException {
         Object bean = beanRef.get();
         if (bean == null) {

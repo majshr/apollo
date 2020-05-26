@@ -82,7 +82,7 @@ public class SpringValueProcessor extends ApolloProcessor implements BeanFactory
     @Override
     public Object postProcessBeforeInitialization(Object bean, String beanName) throws BeansException {
         if (configUtil.isAutoUpdateInjectedSpringPropertiesEnabled()) {
-            // 处理 Field 和 Method
+            // 处理 Field 和 Method，根据生成的Bean对象处理（字段上有value注解）
             super.postProcessBeforeInitialization(bean, beanName);
             // 处理 XML 配置的 Bean 的 PlaceHolder 们
             processBeanPropertyValues(bean, beanName);

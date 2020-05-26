@@ -47,7 +47,7 @@ import com.google.common.collect.Sets;
  */
 public class PropertySourcesProcessor implements BeanFactoryPostProcessor, EnvironmentAware, PriorityOrdered {
 	/**
-     * Namespace 名字集合<br>
+     * Namespace 名字集合（所有xml配置或注解配置的）<br>
      * KEY：优先级<br>
      * VALUE：Namespace 名字集合<br>
      * 

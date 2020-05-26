@@ -17,7 +17,7 @@ import org.springframework.util.ReflectionUtils;
  */
 public abstract class ApolloProcessor implements BeanPostProcessor, PriorityOrdered {
 
-    // bean初始化之前执行(此时bean构造方法和依赖注入执行完, 初始化方法没执行, 还没有生成代理对象)
+    // bean初始化方法之前执行(此时bean构造方法和依赖注入执行完, 初始化方法没执行, 还没有生成代理对象)
     @Override
     public Object postProcessBeforeInitialization(Object bean, String beanName) throws BeansException {
         Class clazz = bean.getClass();
